@@ -25,6 +25,15 @@
   
     .controls{display:none;margin:12px 0;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.control label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin:0 0 6px}.control select{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 10px}.history{display:none;margin:0 0 14px;gap:8px;align-items:center;flex-wrap:wrap}.history strong{font-size:12px;color:var(--muted)}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}.modal{display:none;position:fixed;inset:0;background:rgba(16,42,67,.55);z-index:20;padding:22px;align-items:center;justify-content:center}.modal.open{display:flex}.modal-card{background:#fff;border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.25);width:min(760px,100%);max-height:88vh;overflow:auto;padding:22px}.modal-card h2{margin:0 0 6px}.modal-card p{color:var(--muted);margin:0 0 18px}.mapping-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.mapping-grid label{font-size:12px;font-weight:800;color:var(--muted);display:block;margin-bottom:5px}.mapping-grid select{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 9px}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}.required{color:var(--danger)}
     @media(max-width:800px){.controls,.mapping-grid{grid-template-columns:1fr}}
+
+    /* Dataset loading progress */
+    .loading-overlay{position:fixed;inset:0;background:rgba(16,42,67,.65);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px}
+    .loading-card{width:min(520px,92vw);background:#fff;border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+    .loading-title{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:18px}
+    .progress-bar{height:18px;background:#e5edf6;border-radius:999px;overflow:hidden}
+    .progress-fill{width:0;height:100%;background:linear-gradient(90deg,var(--blue),#4ea1ff);transition:width .18s linear}
+    .progress-text{margin-top:10px;font-weight:800;color:#174d7c}
+    .loading-note{margin-top:10px;color:var(--muted);font-size:13px;min-height:18px}
   </style>
 </head>
 <body>
@@ -71,6 +80,15 @@
   <div class="modal" id="mappingModal" role="dialog" aria-modal="true" aria-labelledby="mappingTitle">
     <div class="modal-card"><h2 id="mappingTitle">Map Excel columns</h2><p>The expected headers were not detected automatically. Select the matching columns below. UEN and Company Name are required.</p><div class="mapping-grid" id="mappingGrid"></div><div class="modal-actions"><button class="btn btn-secondary" id="cancelMapping">Cancel</button><button class="btn btn-primary" id="applyMapping">Import Dataset</button></div></div>
   </div>
+
+  <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true" style="display:none">
+    <div class="loading-card">
+      <div class="loading-title">Loading Dataset...</div>
+      <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-text" id="progressText">0%</div>
+      <div class="loading-note" id="loadingNote">Preparing dataset...</div>
+    </div>
+  </div>
 <script>
 (() => {
   const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -81,6 +99,10 @@
   const norm=s=>String(s??'').trim().toLowerCase().replace(/[\s_-]+/g,' ');
   const clean=v=>String(v??'').trim();
   const on=(el,event,handler)=>{if(el)el.addEventListener(event,handler)};
+  function showLoader(message='Loading...'){const overlay=$('#loadingOverlay'),fill=$('#progressFill'),text=$('#progressText'),note=$('#loadingNote');if(!overlay)return;if(fill)fill.style.width='0%';if(text)text.textContent='0%';if(note)note.textContent=message;overlay.style.display='flex'}
+  function updateLoader(percent,message){const p=Math.min(100,Math.max(0,Number(percent)||0)),fill=$('#progressFill'),text=$('#progressText'),note=$('#loadingNote');if(fill)fill.style.width=p+'%';if(text)text.textContent=Math.round(p)+'%';if(message&&note)note.textContent=message}
+  function hideLoader(){const overlay=$('#loadingOverlay');if(overlay)overlay.style.display='none'}
+  const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
   const findIndex=(headers,list)=>headers.findIndex(h=>list.includes(norm(h)));
   function showStatus(msg,error=false){els.status.textContent=msg;els.status.className='status'+(error?' error':'');els.status.style.display='block'}
   function hideStatus(){els.status.style.display='none'}
@@ -92,11 +114,14 @@
   async function clearCache(){if(!db)await openDB();await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});records=[];filtered=[];els.search.disabled=true;els.search.value='';els.fileName.textContent='None loaded';els.loadedAt.textContent='Data stays in your browser and is not uploaded to a server.';els.summary.style.display='none';els.results.style.display='none';els.controls.style.display='none';els.history.style.display='none';els.drop.style.display='block';showStatus('Cached dataset cleared. Upload an Excel file to begin.');}
   async function saveCache(fileName,sheetName){
     showStatus('Saving the dataset securely in this browser…');
+    updateLoader(90,'Preparing browser cache...');
     await clearStoreSilently();
     const chunkCount=Math.ceil(records.length/CHUNK_SIZE);
     for(let i=0;i<chunkCount;i++){
       const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(records.slice(i*CHUNK_SIZE,(i+1)*CHUNK_SIZE),'chunk:'+i);
       await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)});
+      updateLoader(90+((i+1)/Math.max(1,chunkCount))*9,`Saving cache ${i+1} of ${chunkCount}...`);
+      await nextPaint();
     }
     const meta={fileName,sheetName,recordCount:records.length,chunkCount,updatedAt:new Date().toISOString()};
     const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(meta,'meta');await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
@@ -104,7 +129,26 @@
   }
   async function clearStoreSilently(){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
   async function loadCache(){
-    try{if(!db)await openDB();const meta=await dbGet('meta');if(!meta)return false;showStatus('Loading the cached dataset…');const parts=[];for(let i=0;i<meta.chunkCount;i++){const part=await dbGet('chunk:'+i);if(part)parts.push(...part)}records=parts;prepareSearch();activate(meta);hideStatus();return true}catch(e){console.error(e);showStatus('The cached dataset could not be loaded. Please upload the Excel file again.',true);return false}
+    try{
+      if(!db)await openDB();
+      const meta=await dbGet('meta');
+      if(!meta)return false;
+      showLoader('Opening local cache...');
+      updateLoader(5,'Opening local cache...');
+      showStatus('Loading the cached dataset…');
+      const parts=[];
+      for(let i=0;i<meta.chunkCount;i++){
+        const part=await dbGet('chunk:'+i);
+        if(part)parts.push(...part);
+        updateLoader(10+((i+1)/Math.max(1,meta.chunkCount))*75,`Loading cache ${i+1} of ${meta.chunkCount}...`);
+        await nextPaint();
+      }
+      updateLoader(90,'Preparing search index...');
+      records=parts;prepareSearch();activate(meta);hideStatus();
+      updateLoader(100,'Dataset ready');
+      setTimeout(hideLoader,300);
+      return true;
+    }catch(e){console.error(e);hideLoader();showStatus('The cached dataset could not be loaded. Please upload the Excel file again.',true);return false}
   }
   function workbookCandidates(wb){
     const out=[];for(const sheetName of wb.SheetNames){const ws=wb.Sheets[sheetName];if(!ws||!ws['!ref'])continue;const preview=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true,blankrows:false,range:0}).slice(0,60);if(preview.length)out.push({sheetName,ws,preview})}return out;
@@ -112,8 +156,50 @@
   function locateDataSheet(wb){for(const c of workbookCandidates(wb)){for(let i=0;i<c.preview.length;i++){const h=c.preview[i].map(norm);if(findIndex(h,aliases.uen)>=0&&findIndex(h,aliases.name)>=0)return {...c,headerRow:i,headers:c.preview[i]}}}return null}
   function suggestedHeaderRow(candidate){let best=0,score=-1;candidate.preview.forEach((row,i)=>{const filled=row.filter(v=>clean(v)).length;if(filled>score){score=filled;best=i}});return best}
   function showMapping(wb,file){const candidates=workbookCandidates(wb);if(!candidates.length)throw new Error('No worksheet containing readable cells was found.');const c=candidates[0],headerRow=suggestedHeaderRow(c),headers=c.preview[headerRow].map((v,i)=>clean(v)||`Column ${i+1}`);pendingImport={wb,file,candidate:c,headerRow,headers};const fields=[['uen','UEN','required'],['name','Company Name','required'],['status','Status',''],['type','Entity Type',''],['date','Issue Date',''],['street','Street Name / Address',''],['postal','Postal Code',''],['agency','Issuance Agency','']];els.mappingGrid.innerHTML=fields.map(([key,label,req])=>`<div><label>${label}${req?' <span class="required">*</span>':''}</label><select data-map="${key}"><option value="-1">Not mapped</option>${headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('')}</select></div>`).join('');fields.forEach(([key])=>{const sel=els.mappingGrid.querySelector(`[data-map="${key}"]`);const idx=findIndex(headers,aliases[key]);if(idx>=0)sel.value=idx});els.mappingModal.classList.add('open');showStatus('Automatic header detection was unsuccessful. Map the columns to continue.');}
-  function importRows(ws,headerRow,idx,fileName,sheetName){const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true,blankrows:false,range:headerRow});if(rows.length<2)throw new Error('The selected header row has no data rows below it.');records=[];for(let i=1;i<rows.length;i++){const r=rows[i];const get=k=>idx[k]>=0?r[idx[k]]:'';const item=[clean(get('uen')),clean(get('name')),clean(get('status')),clean(get('type')),excelDate(get('date')),clean(get('street')),clean(get('postal')),clean(get('agency'))];if(item[0]||item[1])records.push(item)}if(!records.length)throw new Error('No valid UEN or Company Name records were found using the selected mapping.');prepareSearch();return saveCache(fileName,sheetName).then(meta=>{activate(meta);hideStatus();els.search.focus()})}
-  function parseWorkbook(file){showStatus('Reading the Excel file. Large files may take a moment…');const reader=new FileReader();reader.onerror=()=>showStatus('The file could not be read. Please try another Excel file.',true);reader.onload=async e=>{try{if(typeof XLSX==='undefined')throw new Error('Excel reader library is unavailable. Check your internet connection and reload this page.');const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,dense:true});const found=locateDataSheet(wb);if(!found){showMapping(wb,file);return}const idx={};Object.entries(aliases).forEach(([k,a])=>idx[k]=findIndex(found.headers,a));await importRows(found.ws,found.headerRow,idx,file.name,found.sheetName)}catch(err){console.error(err);showStatus(err.message||'Unable to process the Excel file.',true)}};reader.readAsArrayBuffer(file)}
+  async function importRows(ws,headerRow,idx,fileName,sheetName){
+    updateLoader(65,'Reading worksheet rows...');
+    await nextPaint();
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true,blankrows:false,range:headerRow});
+    if(rows.length<2)throw new Error('The selected header row has no data rows below it.');
+    records=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i],get=k=>idx[k]>=0?r[idx[k]]:'';
+      const item=[clean(get('uen')),clean(get('name')),clean(get('status')),clean(get('type')),excelDate(get('date')),clean(get('street')),clean(get('postal')),clean(get('agency'))];
+      if(item[0]||item[1])records.push(item);
+      if(i%5000===0||i===rows.length-1){
+        updateLoader(68+(i/Math.max(1,rows.length-1))*17,`Importing ${i.toLocaleString()} of ${(rows.length-1).toLocaleString()} rows...`);
+        await nextPaint();
+      }
+    }
+    if(!records.length)throw new Error('No valid UEN or Company Name records were found using the selected mapping.');
+    updateLoader(87,'Preparing search index...');
+    await nextPaint();
+    prepareSearch();
+    const meta=await saveCache(fileName,sheetName);
+    activate(meta);hideStatus();updateLoader(100,'Dataset ready');
+    setTimeout(hideLoader,300);els.search.focus();
+  }
+  function parseWorkbook(file){
+    showLoader('Reading Excel file...');
+    showStatus('Reading the Excel file. Large files may take a moment…');
+    const reader=new FileReader();
+    reader.onerror=()=>{hideLoader();showStatus('The file could not be read. Please try another Excel file.',true)};
+    reader.onprogress=e=>{if(e.lengthComputable)updateLoader((e.loaded/e.total)*30,'Reading Excel file...')};
+    reader.onload=async e=>{
+      try{
+        if(typeof XLSX==='undefined')throw new Error('Excel reader library is unavailable. Check your internet connection and reload this page.');
+        updateLoader(40,'Opening workbook...');await nextPaint();
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,dense:true});
+        updateLoader(55,'Scanning worksheets...');await nextPaint();
+        const found=locateDataSheet(wb);
+        if(!found){hideLoader();showMapping(wb,file);return}
+        const idx={};Object.entries(aliases).forEach(([k,a])=>idx[k]=findIndex(found.headers,a));
+        await importRows(found.ws,found.headerRow,idx,file.name,found.sheetName);
+      }catch(err){console.error(err);hideLoader();showStatus(err.message||'Unable to process the Excel file.',true)}
+      finally{reader.onload=null;reader.onerror=null}
+    };
+    reader.readAsArrayBuffer(file);
+  }
   function prepareSearch(){records.forEach(r=>{r[8]=norm(r[0]);r[9]=norm(r[1])});filtered=records;page=1}
   function activate(meta){const reg=records.filter(r=>norm(r[2])==='registered').length,dereg=records.filter(r=>norm(r[2])==='deregistered').length;$('#totalRecords').textContent=records.length.toLocaleString();$('#registeredCount').textContent=reg.toLocaleString();$('#deregisteredCount').textContent=dereg.toLocaleString();els.fileName.textContent=meta.fileName+' • '+meta.sheetName;els.loadedAt.textContent='Last dataset update: '+new Date(meta.updatedAt).toLocaleString('en-SG');const types=[...new Set(records.map(r=>r[3]).filter(Boolean))].sort((a,b)=>a.localeCompare(b));els.typeFilter.innerHTML='<option value="all">All entity types</option>'+types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');els.search.disabled=false;els.search.placeholder=mode==='uen'?'Enter a UEN':'Enter a company name';els.summary.style.display='grid';els.results.style.display='block';els.controls.style.display='grid';els.drop.style.display='none';renderHistory();applySearch()}
   function applySearch(){const q=norm(els.search.value),status=els.statusFilter.value,type=els.typeFilter.value;filtered=records.filter(r=>(!q||r[mode==='uen'?8:9].includes(q))&&(status==='all'||norm(r[2])===status)&&(type==='all'||r[3]===type));if(q&&mode==='uen')filtered.sort((a,b)=>Number(b[8]===q)-Number(a[8]===q)||Number(b[8].startsWith(q))-Number(a[8].startsWith(q)));page=1;render()}
@@ -134,7 +220,7 @@
   on(els.exportBtn,'click',exportCSV);
   on(els.clearHistory,'click',()=>{localStorage.removeItem(HISTORY_KEY);renderHistory()});
   on(els.cancelMapping,'click',()=>{pendingImport=null;els.mappingModal?.classList.remove('open');showStatus('Import cancelled. The currently cached dataset was not changed.')});
-  on(els.applyMapping,'click',async()=>{try{if(!pendingImport)throw new Error('No Excel file is awaiting column mapping.');const idx={};els.mappingGrid?.querySelectorAll('[data-map]').forEach(x=>idx[x.dataset.map]=Number(x.value));if(idx.uen<0||idx.name<0)throw new Error('Please map both UEN and Company Name.');const p=pendingImport;els.mappingModal?.classList.remove('open');pendingImport=null;showStatus('Importing with your selected column mapping…');await importRows(p.candidate.ws,p.headerRow,idx,p.file.name,p.candidate.sheetName)}catch(e){showStatus(e.message,true)}});
+  on(els.applyMapping,'click',async()=>{try{if(!pendingImport)throw new Error('No Excel file is awaiting column mapping.');const idx={};els.mappingGrid?.querySelectorAll('[data-map]').forEach(x=>idx[x.dataset.map]=Number(x.value));if(idx.uen<0||idx.name<0)throw new Error('Please map both UEN and Company Name.');const p=pendingImport;els.mappingModal?.classList.remove('open');pendingImport=null;showLoader('Importing mapped worksheet...');updateLoader(65,'Importing mapped worksheet...');showStatus('Importing with your selected column mapping…');await importRows(p.candidate.ws,p.headerRow,idx,p.file.name,p.candidate.sheetName)}catch(e){hideLoader();showStatus(e.message,true)}});
   on(els.uploadBtn,'click',()=>els.fileInput?.click());
   on(els.drop,'click',()=>els.fileInput?.click());
   on(els.fileInput,'change',e=>{const f=e.target.files?.[0];if(f)parseWorkbook(f)});
@@ -144,7 +230,7 @@
   on(els.drop,'drop',e=>{const f=e.dataTransfer?.files?.[0];if(f)parseWorkbook(f)});
   on(els.prev,'click',()=>{if(page>1){page--;render()}});
   on(els.next,'click',()=>{if(page*pageSize<filtered.length){page++;render()}});
-  openDB().then(loadCache).catch(()=>showStatus('Browser storage is unavailable. You can still upload and search, but the dataset may not remain cached.',true));
+  openDB().then(loadCache).catch(()=>{hideLoader();showStatus('Browser storage is unavailable. You can still upload and search, but the dataset may not remain cached.',true)});
 })();
 </script>
 
