@@ -700,7 +700,8 @@
       function esc(v) { return clean(v).replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c])) }
       async function searchDataGov(requestedPage = 1) {
         const enteredQuery = clean(els.search.value);
-        const query = mode === 'name' ? nameSearchQuery(enteredQuery) : enteredQuery.replace(/[^a-z\d]/gi, '');
+        const nameWords = mode === 'name' ? nameSearchQuery(enteredQuery).split(' ').filter(Boolean) : [];
+        const query = mode === 'name' ? [...nameWords].sort((a, b) => b.length - a.length)[0] : enteredQuery.replace(/[^a-z\d]/gi, '');
         if (query.length < 2) { showStatus('Enter at least 2 letters or numbers to search data.gov.sg.', true); return }
         apiRequest?.abort();
         const controller = new AbortController();
@@ -726,6 +727,12 @@
           if (!payload.success || !payload.result) throw new Error(payload.error?.message || 'The data.gov.sg response was invalid.');
           const result = payload.result;
           apiRows = result.records.map(row => [row.uen, row.entity_name, row.uen_status_desc, row.entity_type_desc, row.uen_issue_date, row.reg_street_name, row.reg_postal_code, row.issuance_agency_desc]);
+          if (mode === 'name') {
+            apiRows = apiRows.filter(row => {
+              const normalizedName = normalizeCompanyName(row[1]);
+              return nameWords.every(word => normalizedName.includes(normalizeCompanyName(word)));
+            });
+          }
           const selectedType = els.typeFilter.value;
           const types = [...new Set(apiRows.map(row => row[3]).filter(type => type && norm(type) !== 'na'))].sort((a, b) => a.localeCompare(b));
           els.typeFilter.innerHTML = '<option value="all">All entity types</option>' + types.map(type => `<option value="${esc(type)}">${esc(type)}</option>`).join('');
