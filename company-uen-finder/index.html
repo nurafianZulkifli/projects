@@ -5,6 +5,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Company / UEN Finder V4</title>
+  <link rel="icon" href="../assets/img/core-img/logo.png" type="image/png">
+
+
   <style>
     :root {
       --navy: #102a43;
@@ -657,8 +660,14 @@
     </section>
 
     <section class="controls" id="controls">
-      <div class="control"><label for="statusFilter">Registration status</label><select id="statusFilter"><option value="registered">Registered only</option><option value="all" selected>All statuses</option><option value="deregistered">Deregistered only</option></select></div>
-      <div class="control"><label for="typeFilter">Entity type</label><select id="typeFilter"><option value="all">All entity types</option></select></div>
+      <div class="control"><label for="statusFilter">Registration status</label><select id="statusFilter">
+          <option value="registered">Registered only</option>
+          <option value="all" selected>All statuses</option>
+          <option value="deregistered">Deregistered only</option>
+        </select></div>
+      <div class="control"><label for="typeFilter">Entity type</label><select id="typeFilter">
+          <option value="all">All entity types</option>
+        </select></div>
       <button class="btn btn-secondary" id="exportBtn">Export Results to CSV</button>
     </section>
     <section class="history" id="history"><strong>Recent searches</strong><span id="historyChips"></span><button
@@ -738,7 +747,7 @@
         progressBar.querySelector('.progress-fill').style.width = `${progress}%`;
         els.empty.querySelector('.progress-text').textContent = `${progress}%`;
       }
-      async function loadPrimarySSIC(rows, onProgress = () => {}) {
+      async function loadPrimarySSIC(rows, onProgress = () => { }) {
         ssicRequest?.abort();
         const controller = new AbortController();
         ssicRequest = controller;
@@ -797,7 +806,7 @@
       async function searchDataGov(requestedPage = 1) {
         const enteredQuery = clean(els.search.value);
         const nameWords = mode === 'name' ? nameSearchQuery(enteredQuery).split(' ').filter(Boolean) : [];
-        const query = mode === 'name' ? nameWords[0] : enteredQuery.replace(/[^a-z\d]/gi, '');
+        const query = mode === 'name' ? nameWords.reduce((longest, word) => word.length > longest.length ? word : longest, '') : enteredQuery.replace(/[^a-z\d]/gi, '');
         if (query.length < 2) { showStatus('Enter at least 2 letters or numbers to search data.gov.sg.', true); return }
         apiRequest?.abort();
         ssicRequest?.abort();
