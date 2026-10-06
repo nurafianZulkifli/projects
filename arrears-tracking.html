@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arrears Tracking</title>
+<style>
+:root{--blue:#075ea8;--blue2:#eaf4fd;--yellow:#ffdb70;--yellow2:#fff7dc;--ink:#17212b;--muted:#667085;--line:#d7dde5;--bg:#f4f7fa;--white:#fff;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+.app{min-height:100vh}.topbar{background:var(--white);border-bottom:1px solid var(--line);padding:20px 28px 16px;position:sticky;top:0;z-index:10}.title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.title-row h1{margin:0;font:500 29px/1.2 Georgia,serif}.subtitle{margin-top:5px;color:var(--muted);font-size:13px}.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,.button{border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 12px;border-radius:8px;font-weight:600;cursor:pointer;font:600 13px Segoe UI,Arial,sans-serif}.primary{background:var(--blue);color:white;border-color:var(--blue)}button:hover{filter:brightness(.97)}button:focus,input:focus,textarea:focus{outline:3px solid #b9ddf7;outline-offset:1px}
+.layout{display:grid;grid-template-columns:245px 1fr;min-height:calc(100vh - 92px)}.sidebar{background:#fff;border-right:1px solid var(--line);padding:20px 14px}.side-heading{padding:0 9px 10px;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.batch-list{display:flex;flex-direction:column;gap:7px}.batch-tab{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-radius:8px;padding:11px 12px;background:transparent;text-align:left;font-size:14px}.batch-tab.active{background:var(--blue2);color:var(--blue)}.count{min-width:27px;text-align:center;background:#edf0f4;border-radius:12px;padding:2px 7px;font-size:12px}.batch-tab.active .count{background:#cfe6f8}
+.main{padding:28px;min-width:0}.batch-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:17px}.batch-head h2{font-size:22px;margin:0 0 7px}.source-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.source-line a{color:#0563c1;text-decoration:underline;font-size:14px}.icon-btn{padding:5px 8px;font-size:12px}.toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:16px 0 12px}.search{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:0 10px;max-width:430px;flex:1}.search input{border:0;background:transparent;padding:10px 7px;width:100%;font-size:14px}.summary{font-size:13px;color:var(--muted)}
+.table-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;box-shadow:0 1px 2px rgba(16,24,40,.04)}table{border-collapse:collapse;width:100%;min-width:700px}th{background:#fff6d6;text-align:left;padding:11px 13px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #d9bd64;color:#5d4b12}td{padding:12px 13px;border-bottom:1px solid #eee6c7;font-size:14px;vertical-align:top}tbody tr{background:var(--yellow2)}tbody tr:nth-child(even){background:#fff1bc}tbody tr:last-child td{border-bottom:0}.eid{font-family:Consolas,monospace;font-weight:700}.name{font-weight:650}.remarks{white-space:pre-wrap}.row-actions{white-space:nowrap}.row-actions button{padding:5px 8px;margin-right:4px}.delete{color:var(--danger)}.empty{padding:44px;text-align:center;color:var(--muted);background:#fff}
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;place-items:center;padding:20px;z-index:30}.modal.open{display:grid}.dialog{width:min(520px,100%);background:#fff;border-radius:12px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.24)}.dialog h3{margin:0 0 17px}.field{margin-bottom:14px}.field label{display:block;font-size:13px;font-weight:650;margin-bottom:6px}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 11px;font:14px Segoe UI,Arial,sans-serif}.field textarea{min-height:90px;resize:vertical}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.note{font-size:12px;color:var(--muted);margin-top:7px}.footer-note{font-size:12px;color:var(--muted);margin-top:12px}
+@media(max-width:760px){.topbar{padding:16px}.layout{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line);padding:12px}.batch-list{flex-direction:row;overflow:auto}.batch-tab{width:auto;min-width:max-content}.main{padding:18px 14px}.title-row,.batch-head{flex-direction:column}.actions{width:100%}.actions button{flex:1}.toolbar{align-items:flex-start;flex-direction:column}.search{max-width:none;width:100%}}
+@media print{.sidebar,.actions,.toolbar,.row-actions,.icon-btn{display:none!important}.layout{display:block}.main{padding:0}.topbar{position:static;padding:0 0 20px}.table-wrap{box-shadow:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="title-row"><div><h1>Arrears Tracking</h1><div class="subtitle" id="dateStamp"></div></div><div class="actions"><button onclick="openBatchModal()">+ New batch</button><button onclick="document.getElementById('csvImport').click()">Import CSV</button><input id="csvImport" type="file" accept=".csv,text/csv" hidden onchange="importCSV(event)"><button onclick="exportCSV()">Export CSV</button><button class="primary" onclick="openRecordModal()">+ Add record</button></div></div></header>
+<div class="layout">
+<aside class="sidebar"><div class="side-heading">Batches</div><div id="batchList" class="batch-list"></div></aside>
+<main class="main">
+  <div class="batch-head"><div><h2 id="batchTitle"></h2><div class="source-line"><a id="sourceLink" target="_blank" rel="noopener">Source list</a><button class="icon-btn" onclick="openSourceModal()">Edit link</button></div></div><button onclick="openBatchModal(true)">Edit batch</button></div>
+  <div class="toolbar"><div class="search">⌕<input id="searchInput" type="search" placeholder="Search Exchange ID, name or remarks" oninput="renderTable()"></div><div class="summary" id="summary"></div></div>
+  <div id="tableArea"></div><div class="footer-note">Changes are saved automatically in this browser. Use Export CSV to transfer the latest data to another device, then use Import CSV there.</div>
+</main>
+</div></div>
+
+<div class="modal" id="recordModal" onclick="backdropClose(event,'recordModal')"><div class="dialog"><h3 id="recordModalTitle">Add record</h3><form id="recordForm"><input type="hidden" id="editIndex"><div class="field"><label for="exchangeId">Exchange ID</label><input id="exchangeId" inputmode="numeric" maxlength="20" required placeholder="e.g. 201306165705"></div><div class="field"><label for="memberName">Name</label><input id="memberName" required placeholder="e.g. SITI ZAWIYAH BINTE KHALILI"></div><div class="field"><label for="remarks">Remarks</label><textarea id="remarks" required placeholder="e.g. mbr in arrears"></textarea></div><div class="dialog-actions"><button type="button" onclick="closeModal('recordModal')">Cancel</button><button class="primary" type="submit">Save record</button></div></form></div></div>
+<div class="modal" id="sourceModal" onclick="backdropClose(event,'sourceModal')"><div class="dialog"><h3>Edit source link</h3><form id="sourceForm"><div class="field"><label for="sourceLabel">Link label</label><input id="sourceLabel" required></div><div class="field"><label for="sourceUrl">Source URL</label><input id="sourceUrl" type="url" required placeholder="https://..."><div class="note">The blue hyperlink above the tracking table will use this label and URL.</div></div><div class="dialog-actions"><button type="button" onclick="closeModal('sourceModal')">Cancel</button><button class="primary" type="submit">Save link</button></div></form></div></div>
+<div class="modal" id="batchModal" onclick="backdropClose(event,'batchModal')"><div class="dialog"><h3 id="batchModalTitle">Create batch</h3><form id="batchForm"><input type="hidden" id="batchEditId"><div class="field"><label for="batchName">Batch name</label><input id="batchName" required placeholder="e.g. Batch 64"></div><div class="field"><label for="batchSourceLabel">Source label</label><input id="batchSourceLabel" required placeholder="e.g. Batch 64 Billing"></div><div class="field"><label for="batchSourceUrl">Source URL</label><input id="batchSourceUrl" type="url" required placeholder="https://..."></div><div class="dialog-actions"><button type="button" id="deleteBatchBtn" class="delete" onclick="deleteBatch()" style="margin-right:auto;display:none">Delete batch</button><button type="button" onclick="closeModal('batchModal')">Cancel</button><button class="primary" type="submit">Save batch</button></div></form></div></div>
+<script>
+const STORAGE_KEY='arrearsTrackingDataV1';
+const initialData={activeId:null,batches:[]};
+let data=loadData();
+function loadData(){try{const saved=localStorage.getItem(STORAGE_KEY);return saved?JSON.parse(saved):structuredClone(initialData)}catch(e){return structuredClone(initialData)}}
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data))}
+function batch(){return data.batches.find(b=>b.id===data.activeId)||data.batches[0]||null}
+function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function render(){const b=batch();if(!b){document.getElementById('batchList').innerHTML='';document.getElementById('batchTitle').textContent='No data loaded';document.getElementById('sourceLink').textContent='Import a CSV file to begin';document.getElementById('sourceLink').removeAttribute('href');document.getElementById('summary').textContent='0 records';document.getElementById('tableArea').innerHTML='<div class="empty"><h3>No data loaded</h3><p>Import a CSV file to begin or create a new batch.</p></div>';return;}document.getElementById('batchList').innerHTML=data.batches.map(x=>`<button class="batch-tab ${x.id===b.id?'active':''}" onclick="selectBatch('${x.id}')"><span>${esc(x.name)}</span><span class="count">${x.records.length}</span></button>`).join('');document.getElementById('batchTitle').textContent=b.name;const link=document.getElementById('sourceLink');link.textContent=b.sourceLabel;link.href=b.sourceUrl;renderTable()}
+function renderTable(){const b=batch(),q=document.getElementById('searchInput').value.trim().toLowerCase();const rows=b.records.map((r,i)=>({...r,_i:i})).filter(r=>!q||[r.exchangeId,r.name,r.remarks].some(v=>v.toLowerCase().includes(q)));const paid=b.records.filter(x=>x.paid).length;document.getElementById('summary').textContent=`Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length-paid}`;document.getElementById('tableArea').innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th style="width:19%">Exchange ID</th><th style="width:32%">Name</th><th>Remarks</th><th style="width:120px">Arrears Paid</th><th style="width:115px">Actions</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="eid">${esc(r.exchangeId)}</td><td class="name">${esc(r.name)}</td><td class="remarks" style="${r.paid?`text-decoration:line-through;color:#667085;`:''}">${esc(r.remarks)}</td><td><input type="checkbox" ${r.paid?'checked':''} onchange="togglePaid(${r._i},this.checked)"> ${r.paid?'Paid':'Outstanding'}</td><td class="row-actions"><button onclick="openRecordModal(${r._i})">Edit</button><button class="delete" onclick="deleteRecord(${r._i})">Delete</button></td></tr>`).join('')}</tbody></table></div>`:`<div class="empty">No matching records.</div>`}
+function selectBatch(id){data.activeId=id;document.getElementById('searchInput').value='';save();render()}
+function openRecordModal(index=''){const editing=index!=='';document.getElementById('recordModalTitle').textContent=editing?'Edit record':'Add record';document.getElementById('editIndex').value=index;if(editing){const r=batch().records[index];exchangeId.value=r.exchangeId;memberName.value=r.name;remarks.value=r.remarks}else{recordForm.reset();editIndex.value=''}openModal('recordModal');setTimeout(()=>exchangeId.focus(),20)}
+recordForm.addEventListener('submit',e=>{e.preventDefault();const idx=editIndex.value;const r={exchangeId:exchangeId.value.trim(),name:memberName.value.trim().toUpperCase(),remarks:remarks.value.trim(),paid:(idx!==''?batch().records[Number(idx)]?.paid:false)||false};if(idx==='')batch().records.push(r);else batch().records[Number(idx)]=r;save();closeModal('recordModal');render()});
+function deleteRecord(i){if(confirm('Delete this record?')){batch().records.splice(i,1);save();render()}}
+function openSourceModal(){sourceLabel.value=batch().sourceLabel;sourceUrl.value=batch().sourceUrl;openModal('sourceModal')}
+sourceForm.addEventListener('submit',e=>{e.preventDefault();batch().sourceLabel=sourceLabel.value.trim();batch().sourceUrl=sourceUrl.value.trim();save();closeModal('sourceModal');render()});
+function openBatchModal(edit=false){batchForm.reset();batchEditId.value=edit?batch().id:'';batchModalTitle.textContent=edit?'Edit batch':'Create batch';deleteBatchBtn.style.display=edit?'inline-block':'none';if(edit){batchName.value=batch().name;batchSourceLabel.value=batch().sourceLabel;batchSourceUrl.value=batch().sourceUrl}openModal('batchModal')}
+batchForm.addEventListener('submit',e=>{e.preventDefault();const id=batchEditId.value;if(id){const b=data.batches.find(x=>x.id===id);b.name=batchName.value.trim();b.sourceLabel=batchSourceLabel.value.trim();b.sourceUrl=batchSourceUrl.value.trim()}else{const newId='b'+Date.now();data.batches.push({id:newId,name:batchName.value.trim(),sourceLabel:batchSourceLabel.value.trim(),sourceUrl:batchSourceUrl.value.trim(),records:[]});data.activeId=newId}save();closeModal('batchModal');render()});
+function deleteBatch(){if(data.batches.length===1)return alert('At least one batch is required.');if(confirm(`Delete ${batch().name} and all its records?`)){data.batches=data.batches.filter(x=>x.id!==data.activeId);data.activeId=data.batches[0].id;save();closeModal('batchModal');render()}}
+function togglePaid(i,val){batch().records[i].paid=val;save();renderTable()}
+function csvEscape(value){const v=String(value??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function exportCSV(){
+ const headers=['Batch','Source Label','Source URL','Exchange ID','Name','Remarks','Arrears Paid'];
+ const lines=[headers.map(csvEscape).join(',')];
+ data.batches.forEach(b=>{
+   if(!b.records.length) lines.push([b.name,b.sourceLabel,b.sourceUrl,'','','',''].map(csvEscape).join(','));
+   b.records.forEach(r=>lines.push([b.name,b.sourceLabel,b.sourceUrl,r.exchangeId,r.name,r.remarks,r.paid?'Yes':'No'].map(csvEscape).join(',')));
+ });
+ const csv='\uFEFF'+lines.join('\r\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='arrears-tracking-current.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function parseCSV(text){
+ const rows=[];let row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"'){quoted=false}else cell+=c}else{if(c==='"')quoted=true;else if(c===','){row.push(cell);cell=''}else if(c==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}else cell+=c}}
+ if(cell.length||row.length){row.push(cell.replace(/\r$/,''));rows.push(row)}return rows;
+}
+function importCSV(event){
+ const file=event.target.files[0];if(!file)return;
+ const reader=new FileReader();reader.onload=()=>{
+  try{
+   const rows=parseCSV(String(reader.result).replace(/^\uFEFF/,''));if(rows.length<2)throw new Error('The CSV file has no data rows.');
+   const headers=rows[0].map(x=>x.trim().toLowerCase()),required=['batch','source label','source url','exchange id','name','remarks','arrears paid'];
+   if(!required.every(h=>headers.includes(h)))throw new Error('Required columns: '+required.join(', '));
+   const col=Object.fromEntries(headers.map((h,i)=>[h,i])),batches=[],byName=new Map();
+   rows.slice(1).filter(r=>r.some(x=>String(x).trim())).forEach(r=>{
+    const batchName=(r[col['batch']]||'').trim();if(!batchName)return;
+    let b=byName.get(batchName);if(!b){b={id:'b'+Date.now()+batches.length,name:batchName,sourceLabel:(r[col['source label']]||'').trim()||'Source list',sourceUrl:(r[col['source url']]||'').trim()||'https://example.com/',records:[]};byName.set(batchName,b);batches.push(b)}
+    const exchangeId=(r[col['exchange id']]||'').trim(),name=(r[col['name']]||'').trim(),remarks=(r[col['remarks']]||'').trim();
+    if(exchangeId||name||remarks)b.records.push({exchangeId,name,remarks,paid:/^(yes|true|paid|1)$/i.test((r[col['arrears paid']]||'').trim())});
+   });
+   if(!batches.length)throw new Error('No valid batches were found.');
+   if(!confirm('Importing will replace the current tracker data. Continue?'))return;
+   data={activeId:batches[0].id,batches};save();document.getElementById('searchInput').value='';render();alert('CSV imported successfully.');
+  }catch(err){alert('CSV import failed: '+err.message)}finally{event.target.value=''}
+ };reader.readAsText(file);
+}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function backdropClose(e,id){if(e.target.id===id)closeModal(id)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'))});
+document.getElementById('dateStamp').textContent=new Intl.DateTimeFormat('en-SG',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date());
+render();
+</script>
+</body>
+</html>
