@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Company / UEN Finder V4</title>
   <link rel="icon" href="../assets/img/core-img/logo.png" type="image/png">
+  <script src="../assets/theme.js"></script>
 
 
   <style>
@@ -81,7 +82,7 @@
 
     .card {
       background: var(--card);
-      border: 1px solid rgba(217, 226, 236, .8);
+          border: 1px solid var(--line);
       border-radius: 18px;
       box-shadow: var(--shadow)
     }
@@ -795,14 +796,35 @@
           if (ssicRequest === controller) ssicRequest = null;
         }
       }
+      const originalTitle = document.title;
+      function clearDoneNudge() { document.title = originalTitle }
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) clearDoneNudge() });
+      window.addEventListener('focus', clearDoneNudge);
+      function requestNudgePermission() {
+        try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission() } catch { }
+      }
+      function nudgeIfAway(message) {
+        if (!document.hidden && document.hasFocus()) return;
+        document.title = `✅ ${message} · ${originalTitle}`;
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            const notification = new Notification(originalTitle, { body: message, tag: 'uen-search-done' });
+            notification.onclick = () => { window.focus(); notification.close() };
+          }
+        } catch { }
+      }
       async function renderWithPrimarySSIC() {
         render();
         try {
           const failed = await loadPrimarySSIC([...visibleRows]);
           render();
           if (failed) showStatus('Some primary SSIC codes could not be retrieved.', true);
+          nudgeIfAway(failed ? 'Search finished with some missing SSIC codes' : 'Your search is done');
         } catch (error) {
-          if (error.name !== 'AbortError') showStatus(error.message || 'Unable to retrieve primary SSIC codes.', true);
+          if (error.name !== 'AbortError') {
+            showStatus(error.message || 'Unable to retrieve primary SSIC codes.', true);
+            nudgeIfAway('Search finished with an error');
+          }
         }
       }
       function showStatus(msg, error = false) { els.status.textContent = msg; els.status.className = 'status' + (error ? ' error' : ''); els.status.style.display = 'block' }
@@ -813,6 +835,7 @@
         const nameWords = mode === 'name' ? nameSearchQuery(enteredQuery).split(' ').filter(Boolean) : [];
         const query = mode === 'name' ? nameSearchWord(nameWords) : enteredQuery.replace(/[^a-z\d]/gi, '');
         if (query.length < 2) { showStatus('Enter at least 2 letters or numbers to search data.gov.sg.', true); return }
+        requestNudgePermission();
         apiRequest?.abort();
         ssicRequest?.abort();
         const controller = new AbortController();
@@ -885,6 +908,7 @@
             els.empty.textContent = 'Search failed.';
             render();
             showStatus(error.message || 'Unable to reach data.gov.sg. Check your connection and try again.', true);
+            nudgeIfAway('Search failed');
           }
         } finally {
           if (apiRequest === controller) apiRequest = null;

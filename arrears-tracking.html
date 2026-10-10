@@ -1,49 +1,350 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Arrears Tracking</title><style>
-:root{--blue:#075ea8;--pale:#eaf4fd;--line:#d0d5dd;--ink:#182230;--muted:#667085;--bg:#f5f7fa}*{box-sizing:border-box}body{margin:0;font:14px Segoe UI,Arial;color:var(--ink);background:var(--bg)}header{background:#fff;border-bottom:1px solid var(--line);padding:18px 24px}h1{margin:0;font:28px Georgia,serif}.top{display:flex;justify-content:space-between;gap:15px}.actions,.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabs{margin-top:15px}button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-weight:600;cursor:pointer}.primary,.tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}.view{padding:24px}.empty{text-align:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:55px;color:var(--muted)}.batchnav{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.batchbtn.active{background:var(--pale);color:var(--blue)}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:15px}.head h2{margin:0 0 8px}.source{color:#0563c1;text-decoration:underline}.summary{color:var(--muted);margin:12px 0}.tablewrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;min-width:750px}th,td{padding:11px;border-bottom:1px solid #eee;text-align:left}th{background:#fff4c7}tbody tr{background:#fff9df}.paid{text-decoration:line-through;color:var(--muted)}.nfc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}.card{background:#fff;border:1px solid #667085;padding:14px;min-height:285px}.card h3{margin:0 0 20px;text-decoration:underline}.period{text-align:center;font-weight:700;text-decoration:underline;margin-bottom:18px}.phase{font-weight:700;margin:18px 0 8px}.task{display:flex;gap:10px;margin:9px 0 9px 28px}.task.done span{text-decoration:line-through;color:var(--muted)}.sub{font-size:12px;margin-left:52px}.progress{font-size:12px;color:var(--muted);margin-top:15px}.modal{display:none;position:fixed;inset:0;background:#0006;place-items:center;padding:20px}.modal.open{display:grid}.dialog{background:#fff;width:min(500px,100%);padding:22px;border-radius:12px}.field{margin:12px 0}.field label{display:block;font-weight:600;margin-bottom:5px}.field input,.field textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px}.dialogfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}@media(max-width:650px){.top,.head{flex-direction:column}.view{padding:15px}}
-</style></head><body><header><div class="top"><div><h1>Arrears Tracking</h1><small id="stamp"></small></div><div class="actions"><button onclick="csvFile.click()">Import CSV</button><input hidden type="file" id="csvFile" accept=".csv" onchange="importCSV(event)"><button onclick="exportCSV()">Export CSV</button><button class="primary" onclick="recordDlg()">+ Add record</button></div></div><div class="tabs"><button id="tabA" class="tab active" onclick="show('arrears')">Arrears Tracking</button><button id="tabN" class="tab" onclick="show('nfc')">NFC Batch Overview</button></div></header>
-<section id="arrears" class="view"><div id="batchnav" class="batchnav"></div><div id="arrearsBody"></div></section>
-<section id="nfc" class="view" hidden><div class="head"><div><h2>NFC Batch Overview</h2><strong id="overall"></strong></div><div class="actions"><button onclick="nfcFile.click()">Import NFC CSV</button><input hidden type="file" id="nfcFile" accept=".csv,text/csv" onchange="importNfcCSV(event)"><button onclick="exportNfcCSV()">Export NFC CSV</button></div></div><div id="nfcGrid" class="nfc-grid"></div></section>
-<div id="recordModal" class="modal"><div class="dialog"><h3>Add / Edit record</h3><input id="editIdx" type="hidden"><div class="field"><label>Exchange ID</label><input id="eid"></div><div class="field"><label>Name</label><input id="nm"></div><div class="field"><label>Remarks</label><textarea id="rem"></textarea></div><div class="dialogfoot"><button onclick="closeM()">Cancel</button><button class="primary" onclick="saveRecord()">Save</button></div></div></div>
-<script>
-const KEY='arrearsTrackingDataV2',NKEY='nfcOverviewDataV2';
-let data=JSON.parse(localStorage.getItem(KEY)||'{"activeId":null,"batches":[]}');
-let nfcData=JSON.parse(localStorage.getItem(NKEY)||'{"batches":[]}');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const save=()=>localStorage.setItem(KEY,JSON.stringify(data));const batch=()=>data.batches.find(x=>x.id===data.activeId)||data.batches[0];
-function show(v){arrears.hidden=v!=='arrears';nfc.hidden=v!=='nfc';tabA.classList.toggle('active',v==='arrears');tabN.classList.toggle('active',v==='nfc');if(v==='nfc')renderNFC()}
-function render(){let b=batch();batchnav.innerHTML=data.batches.map(x=>`<button class="batchbtn ${x===b?'active':''}" onclick="data.activeId='${x.id}';save();render()">${esc(x.name)} (${x.records.length})</button>`).join('');if(!b){arrearsBody.innerHTML='<div class="empty"><h2>No data loaded</h2><p>Import a CSV file to begin.</p></div>';return}let paid=b.records.filter(x=>x.paid).length;arrearsBody.innerHTML=`<div class="head"><div><h2>${esc(b.name)}</h2><a class="source" href="${esc(b.sourceUrl)}" target="_blank">${esc(b.sourceLabel)}</a></div></div><div class="summary">Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length-paid}</div><div class="tablewrap"><table><thead><tr><th>Exchange ID</th><th>Name</th><th>Remarks</th><th>Arrears Paid</th><th>Actions</th></tr></thead><tbody>${b.records.map((r,i)=>`<tr><td>${esc(r.exchangeId)}</td><td>${esc(r.name)}</td><td class="${r.paid?'paid':''}">${esc(r.remarks)}</td><td><label><input type="checkbox" ${r.paid?'checked':''} onchange="togglePaid(${i},this.checked)"> ${r.paid?'Paid':'Outstanding'}</label></td><td><button onclick="recordDlg(${i})">Edit</button> <button onclick="del(${i})">Delete</button></td></tr>`).join('')}</tbody></table></div>`}
-function togglePaid(i,v){batch().records[i].paid=v;save();render()}function del(i){if(confirm('Delete this record?')){batch().records.splice(i,1);save();render()}}function recordDlg(i=''){if(!batch())return alert('Import CSV data first.');editIdx.value=i;if(i!==''){let r=batch().records[i];eid.value=r.exchangeId;nm.value=r.name;rem.value=r.remarks}else{eid.value=nm.value=rem.value=''}recordModal.classList.add('open')}function closeM(){recordModal.classList.remove('open')}function saveRecord(){let i=editIdx.value,r={exchangeId:eid.value.trim(),name:nm.value.trim(),remarks:rem.value.trim(),paid:i===''?false:batch().records[+i].paid};if(i==='')batch().records.push(r);else batch().records[+i]=r;save();closeM();render()}
-function ce(v){v=String(v??'');return /[",\r\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}function exportCSV(){let h=['Batch','Source Label','Source URL','Exchange ID','Name','Remarks','Arrears Paid'],a=[h.join(',')];data.batches.forEach(b=>b.records.forEach(r=>a.push([b.name,b.sourceLabel,b.sourceUrl,r.exchangeId,r.name,r.remarks,r.paid?'Yes':'No'].map(ce).join(','))));let x=document.createElement('a');x.href=URL.createObjectURL(new Blob(['\ufeff'+a.join('\r\n')],{type:'text/csv'}));x.download='arrears-tracking-current.csv';x.click()}
-function parse(t){let a=[],r=[],c='',q=false;for(let i=0;i<t.length;i++){let x=t[i];if(q){if(x==='"'&&t[i+1]==='"'){c+='"';i++}else if(x==='"')q=false;else c+=x}else if(x==='"')q=true;else if(x===','){r.push(c);c=''}else if(x==='\n'){r.push(c.replace(/\r$/,''));a.push(r);r=[];c=''}else c+=x}if(c||r.length){r.push(c);a.push(r)}return a}function importCSV(e){let f=e.target.files[0],fr=new FileReader;fr.onload=()=>{try{let rows=parse(fr.result.replace(/^\ufeff/,'')),h=rows.shift().map(x=>x.trim().toLowerCase()),idx=n=>h.indexOf(n),map=new Map;rows.forEach(r=>{let bn=(r[idx('batch')]||'').trim();if(!bn)return;if(!map.has(bn))map.set(bn,{id:'b'+map.size+Date.now(),name:bn,sourceLabel:r[idx('source label')]||'Source list',sourceUrl:r[idx('source url')]||'#',records:[]});if(r[idx('exchange id')]||r[idx('name')])map.get(bn).records.push({exchangeId:r[idx('exchange id')]||'',name:r[idx('name')]||'',remarks:r[idx('remarks')]||'',paid:/^(yes|true|paid|1)$/i.test(r[idx('arrears paid')]||'')})});data={activeId:null,batches:[...map.values()]};data.activeId=data.batches[0]?.id||null;save();render()}catch(x){alert('Import failed: '+x.message)}e.target.value=''};fr.readAsText(f)}
-function saveNfc(){localStorage.setItem(NKEY,JSON.stringify(nfcData))}
-function exportNfcCSV(){
- const rows=[['Batch','Period','Section','Task','Completed']];
- nfcData.batches.forEach(b=>b.sections.forEach(sec=>sec.tasks.forEach(task=>rows.push([b.name,b.period,sec.name,task.name,task.completed?'Yes':'No']))));
- const csv='\ufeff'+rows.map(r=>r.map(ce).join(',')).join('\r\n'),a=document.createElement('a');
- a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='nfc-batch-checklist.csv';a.click();URL.revokeObjectURL(a.href);
-}
-function importNfcCSV(e){
- const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>{try{
-  const rows=parse(String(fr.result).replace(/^\ufeff/,''));if(rows.length<2)throw new Error('The CSV has no checklist rows.');
-  const h=rows.shift().map(x=>x.trim().toLowerCase()),ix=n=>h.indexOf(n),required=['batch','period','section','task','completed'];
-  if(required.some(x=>ix(x)<0))throw new Error('Required columns: Batch, Period, Section, Task, Completed.');
-  const batches=[],batchMap=new Map();
-  rows.filter(r=>r.some(x=>String(x).trim())).forEach(r=>{
-   const bn=(r[ix('batch')]||'').trim(),period=(r[ix('period')]||'').trim(),sn=(r[ix('section')]||'').trim(),tn=(r[ix('task')]||'').trim();if(!bn||!sn||!tn)return;
-   let b=batchMap.get(bn);if(!b){b={name:bn,period,sections:[]};batchMap.set(bn,b);batches.push(b)}
-   let sec=b.sections.find(x=>x.name===sn);if(!sec){sec={name:sn,tasks:[]};b.sections.push(sec)}
-   sec.tasks.push({name:tn,completed:/^(yes|true|completed|done|1)$/i.test((r[ix('completed')]||'').trim())});
-  });
-  if(!batches.length)throw new Error('No valid NFC checklist items were found.');
-  if(nfcData.batches.length&&!confirm('Importing will replace the current NFC checklist data. Continue?'))return;
-  nfcData={batches};saveNfc();renderNFC();alert('NFC checklist imported successfully.');
- }catch(err){alert('NFC CSV import failed: '+err.message)}finally{e.target.value=''}};fr.readAsText(f)
-}
-function toggleNfc(bi,si,ti,value){nfcData.batches[bi].sections[si].tasks[ti].completed=value;saveNfc();renderNFC()}
-function renderNFC(){
- if(!nfcData.batches.length){overall.textContent='';nfcGrid.innerHTML='<div class="empty" style="grid-column:1/-1"><h2>No NFC checklist loaded</h2><p>Import an NFC CSV file to begin.</p></div>';return}
- let total=0,done=0;
- nfcGrid.innerHTML=nfcData.batches.map((b,bi)=>{let bt=0,bd=0;const groups=b.sections.map((sec,si)=>`<div class="phase">- ${esc(sec.name)}</div>${sec.tasks.map((task,ti)=>{total++;bt++;if(task.completed){done++;bd++}return `<label class="task ${task.completed?'done':''}"><input type="checkbox" ${task.completed?'checked':''} onchange="toggleNfc(${bi},${si},${ti},this.checked)"><span>${esc(task.name)}</span></label>${task.name==='Process Payment'?'<div class="sub">(Mbr Creation/Key-In/KIV)</div>':''}`}).join('')}`).join('');return `<article class="card"><h3>${esc(b.name)}</h3><div class="period">${esc(b.period)}</div>${groups}<div class="progress">${bd} of ${bt} completed</div></article>`}).join('');
- overall.textContent=`Overall: ${done} of ${total} completed`;
-}
-stamp.textContent=new Intl.DateTimeFormat('en-SG',{dateStyle:'full',timeStyle:'short'}).format(new Date);render();
-</script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Arrears Tracking</title>
+    <style>
+        :root {
+            --blue: #075ea8;
+            --pale: #eaf4fd;
+            --line: #d0d5dd;
+            --ink: #182230;
+            --muted: #667085;
+            --bg: #f5f7fa
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font: 14px Segoe UI, Arial;
+            color: var(--ink);
+            background: var(--bg)
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            padding: 18px 24px
+        }
+
+        h1 {
+            margin: 0;
+            font: 28px Georgia, serif
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px
+        }
+
+        .actions,
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+        .tabs {
+            margin-top: 15px
+        }
+
+        button {
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .primary,
+        .tab.active {
+            background: var(--blue);
+            color: #fff;
+            border-color: var(--blue)
+        }
+
+        .view {
+            padding: 24px
+        }
+
+        .empty {
+            text-align: center;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 55px;
+            color: var(--muted)
+        }
+
+        .batchnav {
+            display: flex;
+            gap: 8px;
+            overflow: auto;
+            margin-bottom: 18px
+        }
+
+        .batchbtn.active {
+            background: var(--pale);
+            color: var(--blue)
+        }
+
+        .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px
+        }
+
+        .head h2 {
+            margin: 0 0 8px
+        }
+
+        .source {
+            color: #0563c1;
+            text-decoration: underline
+        }
+
+        .summary {
+            color: var(--muted);
+            margin: 12px 0
+        }
+
+        .tablewrap {
+            overflow: auto;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 10px
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 750px
+        }
+
+        th,
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #eee;
+            text-align: left
+        }
+
+        th {
+            background: #fff4c7
+        }
+
+        tbody tr {
+            background: #fff9df
+        }
+
+        .paid {
+            text-decoration: line-through;
+            color: var(--muted)
+        }
+
+        .nfc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #667085;
+            padding: 14px;
+            min-height: 285px
+        }
+
+        .card h3 {
+            margin: 0 0 20px;
+            text-decoration: underline
+        }
+
+        .period {
+            text-align: center;
+            font-weight: 700;
+            text-decoration: underline;
+            margin-bottom: 18px
+        }
+
+        .phase {
+            font-weight: 700;
+            margin: 18px 0 8px
+        }
+
+        .task {
+            display: flex;
+            gap: 10px;
+            margin: 9px 0 9px 28px
+        }
+
+        .task.done span {
+            text-decoration: line-through;
+            color: var(--muted)
+        }
+
+        .sub {
+            font-size: 12px;
+            margin-left: 52px
+        }
+
+        .progress {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 15px
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #0006;
+            place-items: center;
+            padding: 20px
+        }
+
+        .modal.open {
+            display: grid
+        }
+
+        .dialog {
+            background: #fff;
+            width: min(500px, 100%);
+            padding: 22px;
+            border-radius: 12px
+        }
+
+        .field {
+            margin: 12px 0
+        }
+
+        .field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px
+        }
+
+        .field input,
+        .field textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px
+        }
+
+        .dialogfoot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 18px
+        }
+
+        @media(max-width:650px) {
+
+            .top,
+            .head {
+                flex-direction: column
+            }
+
+            .view {
+                padding: 15px
+            }
+        }
+    </style>
+    <script src="./assets/theme.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="top">
+            <div>
+                <h1>Arrears Tracking</h1><small id="stamp"></small>
+            </div>
+            <div class="actions"><button onclick="csvFile.click()">Import CSV</button><input hidden type="file"
+                    id="csvFile" accept=".csv" onchange="importCSV(event)"><button onclick="exportCSV()">Export
+                    CSV</button><button class="primary" onclick="recordDlg()">+ Add record</button></div>
+        </div>
+        <div class="tabs"><button id="tabA" class="tab active" onclick="show('arrears')">Arrears
+                Tracking</button><button id="tabN" class="tab" onclick="show('nfc')">NFC Batch Overview</button></div>
+    </header>
+    <section id="arrears" class="view">
+        <div id="batchnav" class="batchnav"></div>
+        <div id="arrearsBody"></div>
+    </section>
+    <section id="nfc" class="view" hidden>
+        <div class="head">
+            <div>
+                <h2>NFC Batch Overview</h2><strong id="overall"></strong>
+            </div>
+            <div class="actions"><button onclick="nfcFile.click()">Import NFC CSV</button><input hidden type="file"
+                    id="nfcFile" accept=".csv,text/csv" onchange="importNfcCSV(event)"><button
+                    onclick="exportNfcCSV()">Export NFC CSV</button></div>
+        </div>
+        <div id="nfcGrid" class="nfc-grid"></div>
+    </section>
+    <div id="recordModal" class="modal">
+        <div class="dialog">
+            <h3>Add / Edit record</h3><input id="editIdx" type="hidden">
+            <div class="field"><label>Exchange ID</label><input id="eid"></div>
+            <div class="field"><label>Name</label><input id="nm"></div>
+            <div class="field"><label>Remarks</label><textarea id="rem"></textarea></div>
+            <div class="dialogfoot"><button onclick="closeM()">Cancel</button><button class="primary"
+                    onclick="saveRecord()">Save</button></div>
+        </div>
+    </div>
+    <script>
+        const KEY = 'arrearsTrackingDataV2', NKEY = 'nfcOverviewDataV2';
+        let data = JSON.parse(localStorage.getItem(KEY) || '{"activeId":null,"batches":[]}');
+        let nfcData = JSON.parse(localStorage.getItem(NKEY) || '{"batches":[]}');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const save = () => localStorage.setItem(KEY, JSON.stringify(data)); const batch = () => data.batches.find(x => x.id === data.activeId) || data.batches[0];
+        function show(v) { arrears.hidden = v !== 'arrears'; nfc.hidden = v !== 'nfc'; tabA.classList.toggle('active', v === 'arrears'); tabN.classList.toggle('active', v === 'nfc'); if (v === 'nfc') renderNFC() }
+        function render() { let b = batch(); batchnav.innerHTML = data.batches.map(x => `<button class="batchbtn ${x === b ? 'active' : ''}" onclick="data.activeId='${x.id}';save();render()">${esc(x.name)} (${x.records.length})</button>`).join(''); if (!b) { arrearsBody.innerHTML = '<div class="empty"><h2>No data loaded</h2><p>Import a CSV file to begin.</p></div>'; return } let paid = b.records.filter(x => x.paid).length; arrearsBody.innerHTML = `<div class="head"><div><h2>${esc(b.name)}</h2><a class="source" href="${esc(b.sourceUrl)}" target="_blank">${esc(b.sourceLabel)}</a></div></div><div class="summary">Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length - paid}</div><div class="tablewrap"><table><thead><tr><th>Exchange ID</th><th>Name</th><th>Remarks</th><th>Arrears Paid</th><th>Actions</th></tr></thead><tbody>${b.records.map((r, i) => `<tr><td>${esc(r.exchangeId)}</td><td>${esc(r.name)}</td><td class="${r.paid ? 'paid' : ''}">${esc(r.remarks)}</td><td><label><input type="checkbox" ${r.paid ? 'checked' : ''} onchange="togglePaid(${i},this.checked)"> ${r.paid ? 'Paid' : 'Outstanding'}</label></td><td><button onclick="recordDlg(${i})">Edit</button> <button onclick="del(${i})">Delete</button></td></tr>`).join('')}</tbody></table></div>` }
+        function togglePaid(i, v) { batch().records[i].paid = v; save(); render() } function del(i) { if (confirm('Delete this record?')) { batch().records.splice(i, 1); save(); render() } } function recordDlg(i = '') { if (!batch()) return alert('Import CSV data first.'); editIdx.value = i; if (i !== '') { let r = batch().records[i]; eid.value = r.exchangeId; nm.value = r.name; rem.value = r.remarks } else { eid.value = nm.value = rem.value = '' } recordModal.classList.add('open') } function closeM() { recordModal.classList.remove('open') } function saveRecord() { let i = editIdx.value, r = { exchangeId: eid.value.trim(), name: nm.value.trim(), remarks: rem.value.trim(), paid: i === '' ? false : batch().records[+i].paid }; if (i === '') batch().records.push(r); else batch().records[+i] = r; save(); closeM(); render() }
+        function ce(v) { v = String(v ?? ''); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v } function exportCSV() { let h = ['Batch', 'Source Label', 'Source URL', 'Exchange ID', 'Name', 'Remarks', 'Arrears Paid'], a = [h.join(',')]; data.batches.forEach(b => b.records.forEach(r => a.push([b.name, b.sourceLabel, b.sourceUrl, r.exchangeId, r.name, r.remarks, r.paid ? 'Yes' : 'No'].map(ce).join(',')))); let x = document.createElement('a'); x.href = URL.createObjectURL(new Blob(['\ufeff' + a.join('\r\n')], { type: 'text/csv' })); x.download = 'arrears-tracking-current.csv'; x.click() }
+        function parse(t) { let a = [], r = [], c = '', q = false; for (let i = 0; i < t.length; i++) { let x = t[i]; if (q) { if (x === '"' && t[i + 1] === '"') { c += '"'; i++ } else if (x === '"') q = false; else c += x } else if (x === '"') q = true; else if (x === ',') { r.push(c); c = '' } else if (x === '\n') { r.push(c.replace(/\r$/, '')); a.push(r); r = []; c = '' } else c += x } if (c || r.length) { r.push(c); a.push(r) } return a } function importCSV(e) { let f = e.target.files[0], fr = new FileReader; fr.onload = () => { try { let rows = parse(fr.result.replace(/^\ufeff/, '')), h = rows.shift().map(x => x.trim().toLowerCase()), idx = n => h.indexOf(n), map = new Map; rows.forEach(r => { let bn = (r[idx('batch')] || '').trim(); if (!bn) return; if (!map.has(bn)) map.set(bn, { id: 'b' + map.size + Date.now(), name: bn, sourceLabel: r[idx('source label')] || 'Source list', sourceUrl: r[idx('source url')] || '#', records: [] }); if (r[idx('exchange id')] || r[idx('name')]) map.get(bn).records.push({ exchangeId: r[idx('exchange id')] || '', name: r[idx('name')] || '', remarks: r[idx('remarks')] || '', paid: /^(yes|true|paid|1)$/i.test(r[idx('arrears paid')] || '') }) }); data = { activeId: null, batches: [...map.values()] }; data.activeId = data.batches[0]?.id || null; save(); render() } catch (x) { alert('Import failed: ' + x.message) } e.target.value = '' }; fr.readAsText(f) }
+        function saveNfc() { localStorage.setItem(NKEY, JSON.stringify(nfcData)) }
+        function exportNfcCSV() {
+            const rows = [['Batch', 'Period', 'Section', 'Task', 'Completed']];
+            nfcData.batches.forEach(b => b.sections.forEach(sec => sec.tasks.forEach(task => rows.push([b.name, b.period, sec.name, task.name, task.completed ? 'Yes' : 'No']))));
+            const csv = '\ufeff' + rows.map(r => r.map(ce).join(',')).join('\r\n'), a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'nfc-batch-checklist.csv'; a.click(); URL.revokeObjectURL(a.href);
+        }
+        function importNfcCSV(e) {
+            const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => {
+                try {
+                    const rows = parse(String(fr.result).replace(/^\ufeff/, '')); if (rows.length < 2) throw new Error('The CSV has no checklist rows.');
+                    const h = rows.shift().map(x => x.trim().toLowerCase()), ix = n => h.indexOf(n), required = ['batch', 'period', 'section', 'task', 'completed'];
+                    if (required.some(x => ix(x) < 0)) throw new Error('Required columns: Batch, Period, Section, Task, Completed.');
+                    const batches = [], batchMap = new Map();
+                    rows.filter(r => r.some(x => String(x).trim())).forEach(r => {
+                        const bn = (r[ix('batch')] || '').trim(), period = (r[ix('period')] || '').trim(), sn = (r[ix('section')] || '').trim(), tn = (r[ix('task')] || '').trim(); if (!bn || !sn || !tn) return;
+                        let b = batchMap.get(bn); if (!b) { b = { name: bn, period, sections: [] }; batchMap.set(bn, b); batches.push(b) }
+                        let sec = b.sections.find(x => x.name === sn); if (!sec) { sec = { name: sn, tasks: [] }; b.sections.push(sec) }
+                        sec.tasks.push({ name: tn, completed: /^(yes|true|completed|done|1)$/i.test((r[ix('completed')] || '').trim()) });
+                    });
+                    if (!batches.length) throw new Error('No valid NFC checklist items were found.');
+                    if (nfcData.batches.length && !confirm('Importing will replace the current NFC checklist data. Continue?')) return;
+                    nfcData = { batches }; saveNfc(); renderNFC(); alert('NFC checklist imported successfully.');
+                } catch (err) { alert('NFC CSV import failed: ' + err.message) } finally { e.target.value = '' }
+            }; fr.readAsText(f)
+        }
+        function toggleNfc(bi, si, ti, value) { nfcData.batches[bi].sections[si].tasks[ti].completed = value; saveNfc(); renderNFC() }
+        function renderNFC() {
+            if (!nfcData.batches.length) { overall.textContent = ''; nfcGrid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h2>No NFC checklist loaded</h2><p>Import an NFC CSV file to begin.</p></div>'; return }
+            let total = 0, done = 0;
+            nfcGrid.innerHTML = nfcData.batches.map((b, bi) => { let bt = 0, bd = 0; const groups = b.sections.map((sec, si) => `<div class="phase">- ${esc(sec.name)}</div>${sec.tasks.map((task, ti) => { total++; bt++; if (task.completed) { done++; bd++ } return `<label class="task ${task.completed ? 'done' : ''}"><input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleNfc(${bi},${si},${ti},this.checked)"><span>${esc(task.name)}</span></label>${task.name === 'Process Payment' ? '<div class="sub">(Mbr Creation/Key-In/KIV)</div>' : ''}` }).join('')}`).join(''); return `<article class="card"><h3>${esc(b.name)}</h3><div class="period">${esc(b.period)}</div>${groups}<div class="progress">${bd} of ${bt} completed</div></article>` }).join('');
+            overall.textContent = `Overall: ${done} of ${total} completed`;
+        }
+        stamp.textContent = new Intl.DateTimeFormat('en-SG', { dateStyle: 'full', timeStyle: 'short' }).format(new Date); render();
+    </script>
+</body>
+
+</html>

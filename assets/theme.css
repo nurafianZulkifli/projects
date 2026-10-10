@@ -1,0 +1,374 @@
+:root {
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --background: #121521;
+    --surface: #1a1d30;
+    --bg: #111824;
+    --card: #1e2938;
+    --line: #39495b;
+    --text: #e8edf4;
+    --ink: #e8edf4;
+    --navy: #d8e6f4;
+    --muted: #aab9ca;
+    --blue2: #243a52;
+    --pale: #243a52;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .32);
+    --header-start: #121b2b;
+    --header-end: #21405a;
+    --header-text: #f4f7fb;
+}
+
+:root[data-theme="dark"] body {
+    color: var(--text, var(--ink));
+    background-color: var(--bg, var(--background));
+}
+
+:root[data-theme="dark"] button:not([class]) {
+    color: #e0ebf6;
+    background-color: #334457;
+    border-color: #46586b;
+}
+
+:root[data-theme="dark"] .nav {
+    background-color: #182332;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .nav button.active {
+    color: #d9ebff;
+}
+
+:root[data-theme="dark"] input:not([type="file"]),
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea {
+    color: var(--text, var(--ink));
+    background-color: #111b28;
+    border-color: #46586b;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+    color: #91a2b5;
+}
+
+:root[data-theme="dark"] .match,
+:root[data-theme="dark"] .pill,
+:root[data-theme="dark"] table {
+    color: var(--text, var(--ink));
+    background-color: #1a2635;
+}
+
+:root[data-theme="dark"] th {
+    color: #e0ebf6;
+    background-color: #27374a;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] td {
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .btn.secondary {
+    color: #e0ebf6;
+    background-color: #334457;
+}
+
+:root[data-theme="dark"] .toggle {
+    background-color: #273548;
+}
+
+:root[data-theme="dark"] .toggle button.active {
+    color: #e5effa;
+    background-color: #405772;
+}
+
+:root[data-theme="dark"] .btn-secondary {
+    color: #e0ebf6;
+    background-color: #334457;
+}
+
+:root[data-theme="dark"] .clear,
+:root[data-theme="dark"] .pager button,
+:root[data-theme="dark"] .chip {
+    color: #e0ebf6;
+    background-color: #334457;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .drop {
+    color: var(--text, var(--ink));
+    background-color: #1a2635;
+    border-color: #53677e;
+}
+
+:root[data-theme="dark"] .status {
+    color: #d4e8ff;
+    background-color: #243a52;
+}
+
+:root[data-theme="dark"] .status.error {
+    color: #ffd4d0;
+    background-color: #4b292c;
+}
+
+:root[data-theme="dark"] .result.error,
+:root[data-theme="dark"] .notice {
+    color: #f6e6b5;
+    background-color: #453b25;
+    border-color: #7b6833;
+}
+
+:root[data-theme="dark"] .icon-btn-danger,
+:root[data-theme="dark"] .btn.danger {
+    color: #ffc7c2;
+    background-color: #4b292c;
+    border-color: #744044;
+}
+
+:root[data-theme="dark"] .modal-card {
+    color: var(--text, var(--ink));
+    background-color: #1e2938;
+}
+
+:root[data-theme="dark"] .theme-control-header {
+    background: linear-gradient(120deg, var(--header-start), var(--header-end));
+}
+
+:root[data-theme="dark"] .actions.theme-control-host > button:not(.primary),
+:root[data-theme="dark"] .tabs button:not(.active),
+:root[data-theme="dark"] .batchnav button:not(.active),
+:root[data-theme="dark"] .dialogfoot button:not(.primary) {
+    color: #e0ebf6;
+    background-color: #334457;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .batchbtn.active {
+    color: #d9ebff;
+    background-color: #243a52;
+}
+
+:root[data-theme="dark"] .tablewrap {
+    background-color: #1a2635;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .tablewrap th {
+    color: #493b0d;
+    background-color: #f7e7aa;
+}
+
+:root[data-theme="dark"] .tablewrap tbody tr {
+    color: #342b12;
+    background-color: #fff8df;
+}
+
+:root[data-theme="dark"] .source {
+    color: #90c9ff;
+}
+
+:root[data-theme="dark"] .empty {
+    color: var(--muted);
+    background-color: #1e2938;
+    border-color: var(--line);
+}
+
+:root[data-theme="dark"] .dialog {
+    color: var(--text, var(--ink));
+    background-color: #1e2938;
+}
+
+:root[data-theme="dark"] body > header:not(.site-header) {
+    color: var(--header-text);
+    background: linear-gradient(120deg, var(--header-start), var(--header-end));
+}
+
+:root[data-theme="dark"] .site-header {
+    background: linear-gradient(120deg, #171b2c, #222a40);
+}
+
+:root[data-theme="dark"] .site-header .nav {
+    background: transparent;
+    border: 0;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+    --background: #f4f6fa;
+    --surface: #fff;
+    --text: #202638;
+    --muted: #596579;
+    --header-start: #174168;
+    --header-end: #277f9e;
+    --header-text: #fff;
+}
+
+:root[data-theme="light"] body {
+    color: var(--text, var(--ink));
+    background-color: var(--bg, var(--background));
+}
+
+:root[data-theme="light"] .site-header {
+    background: linear-gradient(120deg, rgba(255, 255, 255, .97), rgba(220, 242, 244, .97));
+    border-color: rgba(30, 41, 59, .14);
+    box-shadow: 0 12px 36px rgba(30, 41, 59, .12);
+}
+
+:root[data-theme="light"] .site-header .nav a {
+    color: #465166;
+}
+
+:root[data-theme="light"] .site-header .nav a[aria-current="page"] {
+    color: #fff;
+}
+
+:root[data-theme="light"] .site-header .nav a:hover,
+:root[data-theme="light"] .site-header .nav a:focus-visible {
+    color: #202638;
+    background: rgba(30, 41, 59, .08);
+}
+
+:root[data-theme="light"] .site-header .nav a[aria-current="page"]:hover {
+    color: #fff;
+    background: #287f88;
+}
+
+:root[data-theme="light"] body::before {
+    opacity: .35;
+}
+
+:root[data-theme="light"] body > header:not(.site-header) {
+    color: var(--header-text);
+    background: linear-gradient(120deg, var(--header-start), var(--header-end));
+}
+
+.theme-control {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    margin-left: auto;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid rgba(127, 145, 166, .32);
+    border-radius: 13px;
+    background: rgba(127, 145, 166, .12);
+}
+
+.theme-toggle {
+    width: 34px;
+    height: 34px;
+    padding: 7px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 9px;
+    color: currentColor;
+    background: transparent;
+    opacity: .78;
+    cursor: pointer;
+    transition: opacity .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+
+.home-link {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: currentColor;
+    opacity: .82;
+    transition: opacity .18s ease, background-color .18s ease;
+}
+
+.home-link svg {
+    width: 19px;
+    height: 19px;
+}
+
+.home-link:hover {
+    opacity: 1;
+    background: rgba(127, 145, 166, .2);
+}
+
+.home-link:focus-visible {
+    outline: 2px solid #37aeb0;
+    outline-offset: 2px;
+}
+
+.theme-toggle svg {
+    width: 19px;
+    height: 19px;
+}
+
+.theme-toggle {
+    opacity: 1;
+    background: rgba(127, 145, 166, .24);
+    box-shadow: inset 0 0 0 1px rgba(127, 145, 166, .26);
+}
+
+.theme-toggle:hover {
+    opacity: 1;
+    background: rgba(127, 145, 166, .2);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid #37aeb0;
+    outline-offset: 2px;
+}
+
+.site-header .theme-control {
+    margin-left: 8px;
+}
+
+.top-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+header.has-theme-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+body > nav.nav.theme-control-host {
+    flex-wrap: wrap;
+    overflow: visible;
+}
+
+@media (max-width: 520px) {
+    .theme-control {
+        gap: 0;
+        padding: 3px;
+    }
+
+    .theme-toggle {
+        width: 30px;
+        height: 30px;
+        padding: 6px;
+    }
+
+    .home-link {
+        width: 30px;
+        height: 30px;
+    }
+
+    .site-header .theme-control {
+        margin-left: 0;
+    }
+
+    .site-header .nav {
+        gap: 4px;
+    }
+
+    body > nav.nav.theme-control-host > .theme-control {
+        flex-basis: 100%;
+        justify-content: flex-end;
+    }
+}
