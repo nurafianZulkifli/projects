@@ -920,10 +920,7 @@
       function renderHistory() { const h = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); els.history.style.display = h.length ? 'flex' : 'none'; els.historyChips.innerHTML = h.map((x, i) => `<button class="chip" data-history="${i}">${esc(x.mode === 'uen' ? 'UEN: ' : 'Name: ')}${esc(x.q)}</button>`).join(''); els.historyChips.querySelectorAll('[data-history]').forEach(b => b.onclick = () => { const x = h[Number(b.dataset.history)]; setMode(x.mode); els.search.value = x.q; searchDataGov(1) }) }
       function csvCell(v) { const x = String(v ?? ''); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x }
       function exportCSV() { if (!visibleRows.length) { showStatus('There are no matching results to export.', true); return } const rows = [['UEN', 'Company Name', 'Status', 'Entity Type', 'Issue Date', 'Registered Address', 'Primary SSIC Code', 'Union Code', 'Union Name', 'Issuance Agency'], ...visibleRows.map(r => [...r.slice(0, 7), unionMatches(r[6]).map(x => x.union).join('; '), unionMatches(r[6]).map(x => x.unionName).join('; '), r[7]])]; const blob = new Blob(['\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'company_uen_results_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000) }
-      const unionBySSIC = new Map();
-      function normSSIC(v) { let s = clean(v).toUpperCase().replace(/\s/g, ''); if (/^\d+$/.test(s) && s.length < 5) s = s.padStart(5, '0'); return s }
-      for (const x of window.UNION_SSIC_DATA || []) { const k = normSSIC(x.ssic); if (!unionBySSIC.has(k)) unionBySSIC.set(k, []); unionBySSIC.get(k).push(x) }
-      function unionMatches(ssic) { return unionBySSIC.get(normSSIC(ssic)) || [] }
+      const unionMatches = ssic => window.findUnions(ssic);
       function unionCell(ssic) { const hits = unionMatches(ssic); return hits.length ? hits.map(x => `<span title="${esc(x.unionName || '')}">${esc(x.union)}</span>`).join(', ') : '<span class="na">na</span>' }
       function value(v) { return !v || norm(v) === 'na' ? '<span class="na">na</span>' : esc(v) }
       function getResultView() {

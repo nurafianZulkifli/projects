@@ -292,7 +292,7 @@
         }
     </style>
     <script src="../assets/theme.js"></script>
-    <script src="../assets/union-ssic-data.js"></script>
+    <script src="../union-ssic-checker/union-ssic-data.js"></script>
 </head>
 
 <body>
@@ -349,8 +349,8 @@
         function loadData() { try { const x = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(x) && x.length ? x : EMBEDDED_DATA } catch (e) { return EMBEDDED_DATA } }
         function saveData() { localStorage.setItem(KEY, JSON.stringify(data)) }
         function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) }
-        function normCode(v) { let s = String(v ?? '').trim().toUpperCase().replace(/\s/g, ''); if (/^\d+$/.test(s) && s.length < 5) s = s.padStart(5, '0'); return s }
-        function lookup() { const q = normCode(document.getElementById('ssicInput').value), box = document.getElementById('result'); if (!q) { box.className = 'result error'; box.innerHTML = '<strong>Enter an SSIC code.</strong>'; return } const hits = data.filter(x => normCode(x.ssic) === q); if (!hits.length) { box.className = 'result error'; box.innerHTML = '<strong>No union assignment found</strong><br><span class="hint">No exact match for SSIC ' + esc(q) + '. Try the Full SSIC List to search by industry.</span>'; return } box.className = 'result'; box.innerHTML = '<div class="count">' + hits.length + ' matching assignment' + (hits.length > 1 ? 's' : '') + '</div>' + hits.map(x => '<div class="match"><div class="union">' + esc(x.union) + '</div><div class="unionname">' + esc(x.unionName || '') + '</div><div class="meta"><div class="pill"><span>SSIC Code</span><strong>' + esc(x.ssic) + '</strong></div><div class="pill"><span>Industry</span><strong>' + esc(x.industry) + '</strong></div></div></div>').join('') }
+        const normCode = window.normSSIC;
+        function lookup() { const q = normCode(document.getElementById('ssicInput').value), box = document.getElementById('result'); if (!q) { box.className = 'result error'; box.innerHTML = '<strong>Enter an SSIC code.</strong>'; return } const hits = window.findUnions(q, data); if (!hits.length) { box.className = 'result error'; box.innerHTML = '<strong>No union assignment found</strong><br><span class="hint">No exact match for SSIC ' + esc(q) + '. Try the Full SSIC List to search by industry.</span>'; return } box.className = 'result'; box.innerHTML = '<div class="count">' + hits.length + ' matching assignment' + (hits.length > 1 ? 's' : '') + '</div>' + hits.map(x => '<div class="match"><div class="union">' + esc(x.union) + '</div><div class="unionname">' + esc(x.unionName || '') + '</div><div class="meta"><div class="pill"><span>SSIC Code</span><strong>' + esc(x.ssic) + '</strong></div><div class="pill"><span>Industry</span><strong>' + esc(x.industry) + '</strong></div></div></div>').join('') }
         function unions() { return [...new Set(data.map(x => x.union).filter(Boolean))].sort() }
         function initUnionFilter() { const e = document.getElementById('unionFilter'), v = e.value; e.innerHTML = '<option value="">All unions</option>' + unions().map(u => '<option>' + esc(u) + '</option>').join(''); e.value = v }
         function renderList() { const q = document.getElementById('listFilter').value.trim().toLowerCase(), u = document.getElementById('unionFilter').value; const hits = data.filter(x => (!u || x.union === u) && (!q || [x.ssic, x.industry, x.union, x.unionName].some(v => String(v || '').toLowerCase().includes(q)))); document.getElementById('listCount').textContent = hits.length + ' of ' + data.length + ' records'; document.getElementById('listBody').innerHTML = hits.slice(0, 1200).map(x => '<tr><td class="code">' + esc(x.ssic) + '</td><td><strong>' + esc(x.union) + '</strong><br><span class="hint">' + esc(x.unionName || '') + '</span></td><td>' + esc(x.industry) + '</td></tr>').join('') }
