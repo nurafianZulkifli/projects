@@ -257,10 +257,12 @@
     background: rgba(127, 145, 166, .12);
 }
 
-.theme-toggle {
+.theme-control .theme-toggle {
+    box-sizing: border-box;
     width: 34px;
     height: 34px;
     padding: 7px;
+    line-height: 0;
     display: grid;
     place-items: center;
     border: 0;
@@ -303,13 +305,16 @@
     height: 19px;
 }
 
-.theme-toggle {
+.theme-control .theme-toggle {
     opacity: 1;
     background: rgba(127, 145, 166, .24);
     box-shadow: inset 0 0 0 1px rgba(127, 145, 166, .26);
+    border-radius: 9px;
+    color: currentColor;
+    white-space: normal;
 }
 
-.theme-toggle:hover {
+.theme-control .theme-toggle:hover {
     opacity: 1;
     background: rgba(127, 145, 166, .2);
 }
@@ -348,7 +353,7 @@ body > nav.nav.theme-control-host {
         padding: 3px;
     }
 
-    .theme-toggle {
+    .theme-control .theme-toggle {
         width: 30px;
         height: 30px;
         padding: 6px;
