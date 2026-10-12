@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Leave Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="./assets/theme.js"></script>
+    <style>
+        :root {
+            --navy: #0f2742;
+            --blue: #1769aa;
+            --sky: #e8f2fb;
+            --green: #14b86a;
+            --amber: #f4a524;
+            --red: #ef5b5b;
+            --ink: #243b53;
+            --muted: #627d98;
+            --line: #d9e2ec;
+            --panel: #fff;
+            --bg: #f5f7fa;
+            --shadow: 0 8px 28px rgba(16, 42, 67, .10)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font: 14px/1.45 Inter, Segoe UI, Arial, sans-serif
+        }
+
+        .shell {
+            max-width: 1212px;
+            margin: auto;
+            padding: 22px 16px 50px
+        }
+
+        .page-header {
+            padding: 0 clamp(18px, 4vw, 54px);
+            background: linear-gradient(120deg, var(--navy), var(--blue));
+            color: #fff
+        }
+
+        .top {
+            width: min(1180px, 100%);
+            min-height: 104px;
+            margin: auto;
+            padding: 22px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px
+        }
+
+        .logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--blue), #64b5ff);
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: 23px;
+            box-shadow: 0 8px 22px #2563eb33
+        }
+
+        .brand h1 {
+            font-size: clamp(25px, 4vw, 38px);
+            margin: 0
+        }
+
+        .brand p {
+            margin: 2px 0 0;
+            color: inherit;
+            opacity: .88
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .file-menu {
+            position: relative
+        }
+
+        .file-menu summary {
+            list-style: none
+        }
+
+        .file-menu summary::-webkit-details-marker {
+            display: none
+        }
+
+        .file-menu-panel {
+            position: absolute;
+            z-index: 5;
+            top: calc(100% + 7px);
+            right: 0;
+            min-width: 170px;
+            display: grid;
+            gap: 4px;
+            padding: 6px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 12px 30px #0f274222
+        }
+
+        .file-menu-item {
+            width: 100%;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 650;
+            text-align: left;
+            text-decoration: none;
+            cursor: pointer
+        }
+
+        .file-menu-item:hover,
+        .file-menu-item:focus-visible {
+            background: var(--sky);
+            outline: none
+        }
+
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .btn.primary {
+            background: var(--blue);
+            color: white
+        }
+
+        .btn.ghost {
+            background: white;
+            color: var(--navy);
+            border: 1px solid var(--line)
+        }
+
+        .page-header .btn.ghost {
+            border-color: rgba(255, 255, 255, .45)
+        }
+
+        .page-header .btn.primary {
+            background: #fff;
+            color: var(--navy)
+        }
+
+        .entry-dialog {
+            width: min(420px, calc(100% - 32px));
+            padding: 0;
+            border: 0;
+            border-radius: 16px;
+            color: var(--ink);
+            box-shadow: 0 20px 60px #0f274233
+        }
+
+        .entry-dialog::backdrop {
+            background: #0f274280;
+            backdrop-filter: blur(3px)
+        }
+
+        .entry-form {
+            display: grid;
+            gap: 15px;
+            padding: 22px
+        }
+
+        .entry-form h2 {
+            margin: 0;
+            font-size: 20px
+        }
+
+        .entry-form label {
+            display: grid;
+            gap: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .entry-form input,
+        .entry-form select {
+            width: 100%;
+            padding: 10px 11px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: white;
+            color: var(--ink);
+            font: inherit
+        }
+
+        .entry-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 9px;
+            margin-top: 3px
+        }
+
+        input[type=file] {
+            display: none
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 18px
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 17px 18px;
+            box-shadow: var(--shadow)
+        }
+
+        .cardtop {
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .pill {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            font-weight: 900
+        }
+
+        .al .pill {
+            background: #eaf2ff;
+            color: var(--blue)
+        }
+
+        .oil .pill {
+            background: #eafaf2;
+            color: var(--green)
+        }
+
+        .mc .pill {
+            background: #fff0f0;
+            color: var(--red)
+        }
+
+        .count {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 6px
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 350px;
+            gap: 18px
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden
+        }
+
+        .calhead,
+        .sidehead {
+            padding: 17px 19px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .calhead h2,
+        .sidehead h2 {
+            margin: 0;
+            font-size: 17px
+        }
+
+        .nav button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--line);
+            background: #fff;
+            border-radius: 9px;
+            cursor: pointer
+        }
+
+        .calendar {
+            padding: 12px 15px 18px
+        }
+
+        .week,
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr)
+        }
+
+        .week div {
+            text-align: center;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 8px
+        }
+
+        .day {
+            min-height: 89px;
+            border-top: 1px solid var(--line);
+            border-left: 1px solid var(--line);
+            padding: 8px;
+            position: relative;
+            background: #fff
+        }
+
+        .day:nth-child(7n) {
+            border-right: 1px solid var(--line)
+        }
+
+        .grid .day:nth-last-child(-n+7) {
+            border-bottom: 1px solid var(--line)
+        }
+
+        .day.other {
+            background: #fafbfd;
+            color: #b8c0cc
+        }
+
+        .day.today .num {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 700
+        }
+
+        .tag {
+            margin-top: 5px;
+            border-radius: 6px;
+            padding: 3px 5px;
+            font-size: 10px;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .tag.AL {
+            background: #eaf2ff;
+            color: #1859c9
+        }
+
+        .tag.OIL {
+            background: #e8f8f0;
+            color: #07844a
+        }
+
+        .tag.MC {
+            background: #fff0f0;
+            color: #c93636
+        }
+
+        .tag.half-day {
+            background: #fff0d9;
+            color: #b85c00
+        }
+
+        .sidebody {
+            padding: 7px 12px 14px;
+            max-height: 630px;
+            overflow: auto
+        }
+
+        .event {
+            display: grid;
+            grid-template-columns: 48px 1fr;
+            gap: 11px;
+            padding: 12px 6px;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .datebox {
+            text-align: center;
+            background: #f3f6fa;
+            border-radius: 9px;
+            padding: 6px 3px;
+            height: 49px
+        }
+
+        .datebox b {
+            display: block;
+            font-size: 18px;
+            line-height: 18px
+        }
+
+        .datebox span {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase
+        }
+
+        .eventtitle {
+            font-weight: 800
+        }
+
+        .meta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px
+        }
+
+        #leaveFilter {
+            padding: 8px 9px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--ink);
+            font: 600 11px Segoe UI, Arial, sans-serif;
+            max-width: 145px;
+            cursor: pointer
+        }
+
+        .empty {
+            padding: 45px 20px;
+            text-align: center;
+            color: var(--muted)
+        }
+
+        .status {
+            margin-top: 14px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            background: var(--sky);
+            color: var(--navy);
+            font-size: 12px
+        }
+
+        .status.warn {
+            background: #fff5df;
+            color: #845b05
+        }
+
+        .foot {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 11px
+        }
+
+        .drop {
+            outline: 3px dashed #7eb0ff;
+            outline-offset: -8px
+        }
+
+        @media(max-width:850px) {
+            .layout {
+                grid-template-columns: 1fr
+            }
+
+            .cards {
+                grid-template-columns: 1fr
+            }
+
+            .top {
+                align-items: flex-start;
+                flex-direction: column
+            }
+
+            .day {
+                min-height: 70px;
+                padding: 5px
+            }
+
+            .tag {
+                font-size: 9px
+            }
+
+            .sidebody {
+                max-height: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="page-header">
+        <div class="top">
+            <div class="brand">
+                <div class="logo">✓</div>
+                <div>
+                    <h1>Leave Tracker</h1>
+                    <p>Upload your latest Excel file and the dashboard updates instantly.</p>
+                </div>
+            </div>
+                <div class="actions">
+                    <button class="btn ghost" id="addEntryBtn" type="button">Add entry</button>
+                    <button class="btn ghost" id="resetBtn">Reset sample</button>
+                    <details class="file-menu" id="fileMenu">
+                        <summary class="btn primary">Excel ▾</summary>
+                        <div class="file-menu-panel">
+                            <label class="file-menu-item" for="fileInput">Upload Excel</label>
+                            <button class="file-menu-item" id="exportBtn" type="button">Export Excel</button>
+                        </div>
+                    </details>
+                    <input id="fileInput" type="file" accept=".xlsx,.xls" />
+                </div>
+        </div>
+    </header>
+    <div class="shell" id="app">
+        <div class="cards" id="cards"></div>
+        <div class="layout">
+            <section class="panel">
+                <div class="calhead">
+                    <h2 id="monthTitle"></h2>
+                    <div class="nav"><button id="prev" aria-label="Previous month">‹</button> <button id="next"
+                            aria-label="Next month">›</button></div>
+                </div>
+                <div class="calendar">
+                    <div class="week">
+                        <div>MON</div>
+                        <div>TUE</div>
+                        <div>WED</div>
+                        <div>THU</div>
+                        <div>FRI</div>
+                        <div>SAT</div>
+                        <div>SUN</div>
+                    </div>
+                    <div class="grid" id="calendarGrid"></div>
+                </div>
+            </section>
+            <aside class="panel">
+                <div class="sidehead">
+                    <div>
+                        <h2>Applied dates</h2><span id="eventCount" class="sub"></span>
+                    </div><select id="leaveFilter" aria-label="Filter applied dates by leave type">
+                        <option value="ALL">All leave types</option>
+                        <option value="AL">Annual Leave</option>
+                        <option value="OIL">Off in Lieu</option>
+                        <option value="MC">Medical Leave</option>
+                    </select>
+                </div>
+                <div class="sidebody" id="eventList"></div>
+            </aside>
+        </div>
+        <div id="status" class="status">Upload an Excel workbook to populate the dashboard.</div>
+        <div class="foot">Excel format supported: a Summary sheet with AL, OIL and MC allocations, plus monthly sheets
+            containing Date, Type and Duration values. Data stays in your browser and is not uploaded to a server.</div>
+    </div>
+    <dialog class="entry-dialog" id="entryDialog" aria-labelledby="entryDialogTitle">
+        <form class="entry-form" id="entryForm">
+            <h2 id="entryDialogTitle">Add leave entry</h2>
+            <label for="entryDate">Date
+                <input id="entryDate" name="date" type="date" required />
+            </label>
+            <label for="entryType">Leave type
+                <select id="entryType" name="type" required>
+                    <option value="AL">Annual Leave</option>
+                    <option value="OIL">Off in Lieu</option>
+                    <option value="MC">Medical Leave</option>
+                </select>
+            </label>
+            <label for="entryDuration">Duration (days)
+                <input id="entryDuration" name="duration" type="number" min="0.5" max="31" step="0.5" value="1" required />
+            </label>
+            <div class="entry-form-actions">
+                <button class="btn ghost" id="cancelEntryBtn" type="button">Cancel</button>
+                <button class="btn primary" type="submit">Add entry</button>
+            </div>
+        </form>
+    </dialog>
+    <script>
+        const SAMPLE = {
+            source: 'Leave Tracker.xlsx', alloc: { AL: 15, OIL: null, MC: 14 }, events: [
+                ['2026-01-16', 'AL', .5], ['2026-01-19', 'AL', 1], ['2026-01-30', 'AL', .5], ['2026-02-10', 'MC', 1], ['2026-03-04', 'AL', 1], ['2026-03-13', 'AL', .5], ['2026-03-23', 'AL', 1], ['2026-03-31', 'MC', 1], ['2026-04-01', 'MC', 1], ['2026-04-10', 'AL', 1], ['2026-05-11', 'OIL', 1], ['2026-05-20', 'AL', 1], ['2026-06-09', 'OIL', 1], ['2026-06-26', 'AL', 1], ['2026-07-17', 'AL', .5]
+            ].map(([date, type, duration]) => ({ date, type, duration }))
+        };
+        const EMPTY = { source: '', alloc: { AL: null, OIL: null, MC: null }, events: [] };
+        let state = loadSaved() || structuredClone(EMPTY); let viewDate = new Date(2026, 7, 1); let selectedFilter = 'ALL';
+        const labels = { AL: 'Annual Leave', OIL: 'Off in Lieu', MC: 'Medical Leave' };
+        function localISO(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+        function parseDate(v) {
+            if (v instanceof Date && !isNaN(v)) return localISO(v);
+            if (typeof v === 'number' && v > 20000 && v < 80000) { const x = XLSX.SSF.parse_date_code(v); return x ? `${x.y}-${String(x.m).padStart(2, '0')}-${String(x.d).padStart(2, '0')}` : null }
+            if (typeof v === 'string') { let s = v.trim(), m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/); if (m) { let day = +m[1], month = +m[2], year = +m[3], date = new Date(year, month - 1, day); if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null; return localISO(date); } if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10) } return null;
+        }
+        function parseWorkbook(wb, name) {
+            let alloc = { AL: null, OIL: null, MC: null }, events = [];
+            for (const sn of wb.SheetNames) {
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: null });
+                if (sn.toLowerCase().includes('summary')) {
+                    let hi = rows.findIndex(r => ['AL', 'OIL', 'MC'].every(t => r.some(v => String(v || '').trim().toUpperCase() === t)));
+                    if (hi >= 0) {
+                        const hr = rows[hi].map(v => String(v || '').trim().toUpperCase()); let ar = rows.slice(hi + 1).find(r => r.some(v => String(v || '').trim().toLowerCase() === 'allocated'));
+                        if (ar) { for (const t of ['AL', 'OIL', 'MC']) { let i = hr.indexOf(t), n = Number(ar[i]); if (Number.isFinite(n)) alloc[t] = n } }
+                    }
+                }
+                const headerIndex = rows.findIndex(r => {
+                    const headers = r.map(v => String(v || '').trim().toLowerCase());
+                    return ['date', 'type', 'duration'].every(header => headers.includes(header));
+                });
+                if (headerIndex >= 0) {
+                    const headers = rows[headerIndex].map(v => String(v || '').trim().toLowerCase());
+                    const dateIndex = headers.indexOf('date'), typeIndex = headers.indexOf('type'), durationIndex = headers.indexOf('duration');
+                    rows.slice(headerIndex + 1).forEach(row => {
+                        const date = parseDate(row[dateIndex]), type = String(row[typeIndex] || '').trim().toUpperCase(), durationValue = Number(row[durationIndex]);
+                        if (date && ['AL', 'OIL', 'MC'].includes(type)) events.push({ date, type, duration: Number.isFinite(durationValue) && durationValue > 0 && durationValue <= 31 ? durationValue : 1 });
+                    });
+                }
+            }
+            const unique = [...new Map(events.map(e => [`${e.date}|${e.type}|${e.duration}`, e])).values()].sort((a, b) => a.date.localeCompare(b.date));
+            if (!unique.length) throw Error('No dated AL, OIL or MC entries were found.');
+            return { source: name, alloc, events: unique };
+        }
+        function used(type) { return state.events.filter(e => e.type === type).reduce((s, e) => s + (Number(e.duration) || 1), 0) }
+        function fmt(n) { return Number.isInteger(n) ? String(n) : n.toFixed(1) }
+        function renderCards() { cards.innerHTML = ['AL', 'OIL', 'MC'].map(t => { let u = used(t), a = state.alloc[t], left = a == null ? null : Math.max(0, a - u); return `<div class="card ${t.toLowerCase()}"><div class="cardtop"><div><b>${labels[t]}</b><div class="sub">${t}</div></div><div class="pill">${t}</div></div><div class="count">${left == null ? 'Not set' : fmt(left)}</div><div class="sub">${a == null ? `${fmt(u)} day${u === 1 ? '' : 's'} used · add allocation in Summary` : `${fmt(u)} used of ${fmt(a)} allocated`}</div></div>` }).join('') }
+        function renderCalendar() {
+            monthTitle.textContent = viewDate.toLocaleDateString('en-SG', { month: 'long', year: 'numeric' }); let y = viewDate.getFullYear(), m = viewDate.getMonth(); let first = new Date(y, m, 1), offset = (first.getDay() + 6) % 7, start = new Date(y, m, 1 - offset); let html = '';
+            for (let i = 0; i < 42; i++) { let d = new Date(start); d.setDate(start.getDate() + i); let iso = localISO(d), es = state.events.filter(e => e.date === iso), today = iso === localISO(new Date()); html += `<div class="day ${d.getMonth() !== m ? 'other' : ''} ${today ? 'today' : ''}"><div class="num">${d.getDate()}</div>${es.map(e => `<div class="tag ${e.type} ${Number(e.duration) === 0.5 ? 'half-day' : ''}">${e.type} · ${fmt(e.duration)}d</div>`).join('')}</div>` } calendarGrid.innerHTML = html;
+        }
+        function renderList() { let ev = [...state.events].filter(e => selectedFilter === 'ALL' || e.type === selectedFilter).sort((a, b) => b.date.localeCompare(a.date)); eventCount.textContent = `${ev.length} ${selectedFilter === 'ALL' ? 'entries' : selectedFilter + ' entries'}`; eventList.innerHTML = ev.length ? ev.map(e => { let d = new Date(e.date + 'T00:00:00'), color = Number(e.duration) === 0.5 ? '#f4a524' : e.type === 'AL' ? '#2563eb' : e.type === 'OIL' ? '#14b86a' : '#ef5b5b'; return `<div class="event"><div class="datebox"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-SG', { month: 'short' })}</span></div><div><div class="eventtitle"><span class="dot" style="background:${color}"></span>${labels[e.type]}</div><div class="meta">${d.toLocaleDateString('en-SG', { weekday: 'short', year: 'numeric' })} · ${fmt(e.duration)} day${e.duration === 1 ? '' : 's'}</div></div></div>` }).join('') : '<div class="empty">No leave dates found.</div>' }
+        function render() { renderCards(); renderCalendar(); renderList() }
+        function save() { localStorage.setItem('leaveTrackerData', JSON.stringify(state)) } function loadSaved() { try { return JSON.parse(localStorage.getItem('leaveTrackerData')) } catch { return null } }
+        const addEntryBtn = document.getElementById('addEntryBtn');
+        const entryDialog = document.getElementById('entryDialog');
+        const entryForm = document.getElementById('entryForm');
+        const entryDate = document.getElementById('entryDate');
+        const fileMenu = document.getElementById('fileMenu');
+        addEntryBtn.addEventListener('click', () => {
+            entryForm.reset();
+            entryDate.value = localISO(new Date());
+            entryDialog.showModal();
+        });
+        document.getElementById('cancelEntryBtn').addEventListener('click', () => entryDialog.close());
+        entryForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const formData = new FormData(entryForm);
+            const entry = {
+                date: formData.get('date'),
+                type: formData.get('type'),
+                duration: Number(formData.get('duration'))
+            };
+            state.events.push(entry);
+            state.events.sort((a, b) => a.date.localeCompare(b.date));
+            save();
+            viewDate = new Date(entry.date + 'T00:00:00');
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+            selectedFilter = 'ALL';
+            leaveFilter.value = selectedFilter;
+            status.className = 'status';
+            status.textContent = `Added ${labels[entry.type]} for ${entry.date}.`;
+            entryDialog.close();
+            render();
+        });
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            try {
+                const workbook = XLSX.utils.book_new();
+                const summaryRows = [
+                    ['Leave Tracker Summary'],
+                    ['Leave Type', 'AL', 'OIL', 'MC'],
+                    ['Allocated', state.alloc.AL ?? 'Not set', state.alloc.OIL ?? 'Not set', state.alloc.MC ?? 'Not set']
+                ];
+                XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryRows), 'Summary');
+
+                const monthlyEntries = new Map();
+                for (const entry of [...state.events].sort((a, b) => a.date.localeCompare(b.date))) {
+                    const sheetName = `${entry.date.slice(0, 7)} Entries`;
+                    if (!monthlyEntries.has(sheetName)) monthlyEntries.set(sheetName, [['Date', 'Type', 'Duration']]);
+                    monthlyEntries.get(sheetName).push([entry.date, entry.type, Number(entry.duration)]);
+                }
+                if (monthlyEntries.size === 0) monthlyEntries.set('Leave Entries', [['Date', 'Type', 'Duration']]);
+                for (const [sheetName, rows] of monthlyEntries) {
+                    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), sheetName);
+                }
+
+                XLSX.writeFile(workbook, 'Leave Tracker.xlsx');
+                status.className = 'status';
+                status.textContent = 'Leave data exported to Leave Tracker.xlsx.';
+            } catch (err) {
+                status.className = 'status warn';
+                status.textContent = 'Could not export the workbook: ' + err.message;
+            }
+            fileMenu.open = false;
+        });
+        fileInput.addEventListener('change', async e => { let f = e.target.files[0]; if (!f) return; try { let wb = XLSX.read(await f.arrayBuffer(), { cellDates: true }); state = parseWorkbook(wb, f.name); save(); let first = state.events[0]; if (first) { let d = new Date(first.date + 'T00:00:00'); viewDate = new Date(d.getFullYear(), d.getMonth(), 1) } status.className = 'status'; status.textContent = `Updated from ${f.name}: ${state.events.length} dated entries found.`; render() } catch (err) { status.className = 'status warn'; status.textContent = 'Could not read the workbook: ' + err.message } finally { e.target.value = ''; fileMenu.open = false } });
+        resetBtn.onclick = () => { state = structuredClone(SAMPLE); localStorage.removeItem('leaveTrackerData'); viewDate = new Date(2026, 7, 1); status.className = 'status'; status.textContent = 'Sample data restored.'; render() };
+        leaveFilter.addEventListener('change', e => { selectedFilter = e.target.value; renderList() });
+        prev.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCalendar() }; next.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCalendar() };
+        for (const ev of ['dragenter', 'dragover']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.add('drop') }); for (const ev of ['dragleave', 'drop']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.remove('drop') }); app.addEventListener('drop', e => { let f = e.dataTransfer.files[0]; if (f) { let dt = new DataTransfer(); dt.items.add(f); fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change')) } });
+        render();
+    </script>
+</body>
+
+</html>

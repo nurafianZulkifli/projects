@@ -7,12 +7,15 @@
     <title>Arrears Tracking</title>
     <style>
         :root {
-            --blue: #075ea8;
-            --pale: #eaf4fd;
-            --line: #d0d5dd;
-            --ink: #182230;
-            --muted: #667085;
-            --bg: #f5f7fa
+            --navy: #102a43;
+            --blue: #1769aa;
+            --pale: #e8f2fb;
+            --line: #d9e2ec;
+            --ink: #243b53;
+            --muted: #627d98;
+            --bg: #f5f7fa;
+            --card: #fff;
+            --shadow: 0 8px 28px rgba(16, 42, 67, .10)
         }
 
         * {
@@ -21,37 +24,64 @@
 
         body {
             margin: 0;
-            font: 14px Segoe UI, Arial;
+            font: 14px Inter, Segoe UI, Arial, sans-serif;
             color: var(--ink);
             background: var(--bg)
         }
 
         header {
-            background: #fff;
-            border-bottom: 1px solid var(--line);
-            padding: 18px 24px
+            background: linear-gradient(120deg, var(--navy), var(--blue));
+            color: #fff;
+            padding: 26px clamp(18px, 4vw, 54px)
         }
 
         h1 {
             margin: 0;
-            font: 28px Georgia, serif
+            font-size: clamp(25px, 4vw, 38px)
         }
 
         .top {
+            max-width: 1180px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             gap: 15px
         }
 
-        .actions,
-        .tabs {
+        #stamp {
+            display: inline-block;
+            margin-top: 8px;
+            opacity: .88
+        }
+
+        .actions {
             display: flex;
             gap: 8px;
             flex-wrap: wrap
         }
 
+        .actions[hidden] {
+            display: none
+        }
+
         .tabs {
-            margin-top: 15px
+            position: sticky;
+            top: 0;
+            z-index: 4;
+            margin: 0;
+            padding: 0 clamp(12px, 4vw, 54px);
+            background: #fff;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .tabs-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 13px 0
         }
 
         button {
@@ -63,24 +93,37 @@
             cursor: pointer
         }
 
-        .primary,
-        .tab.active {
-            background: var(--blue);
+        .primary {
+            background: #1c3447;
             color: #fff;
-            border-color: var(--blue)
+            border: 1px solid #1c3447;
+        }
+
+        .tab {
+            border: 0;
+            background: transparent;
+            color: var(--muted)
+        }
+
+        .tab.active {
+            background: var(--pale);
+            color: var(--blue)
         }
 
         .view {
-            padding: 24px
+            max-width: 1212px;
+            margin: 22px auto;
+            padding: 0 16px 50px
         }
 
         .empty {
             text-align: center;
-            background: #fff;
+            background: var(--card);
             border: 1px solid var(--line);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 55px;
-            color: var(--muted)
+            color: var(--muted);
+            box-shadow: var(--shadow)
         }
 
         .batchnav {
@@ -119,9 +162,10 @@
 
         .tablewrap {
             overflow: auto;
-            background: #fff;
+            background: var(--card);
             border: 1px solid var(--line);
-            border-radius: 10px
+            border-radius: 12px;
+            box-shadow: var(--shadow)
         }
 
         table {
@@ -133,16 +177,17 @@
         th,
         td {
             padding: 11px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--line);
             text-align: left
         }
 
         th {
-            background: #fff4c7
+            background: #edf4fa;
+            color: var(--navy)
         }
 
         tbody tr {
-            background: #fff9df
+            background: #fff
         }
 
         .paid {
@@ -157,15 +202,50 @@
         }
 
         .card {
-            background: #fff;
-            border: 1px solid #667085;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
             padding: 14px;
-            min-height: 285px
+            min-height: 285px;
+            box-shadow: var(--shadow)
         }
 
         .card h3 {
-            margin: 0 0 20px;
+            margin: 0;
             text-decoration: underline
+        }
+
+        .nfc-card-head,
+        .phase {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px
+        }
+
+        .nfc-card-head {
+            margin-bottom: 20px
+        }
+
+        .nfc-edit-controls {
+            display: none;
+            align-items: center;
+            gap: 6px
+        }
+
+        .nfc-batch-card.edit-mode .nfc-edit-controls {
+            display: flex
+        }
+
+        .nfc-batch-card.edit-mode {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(23, 105, 170, .12), var(--shadow)
+        }
+
+        .edit-hint {
+            margin: -8px 0 16px;
+            color: var(--muted);
+            font-size: 12px
         }
 
         .period {
@@ -180,10 +260,35 @@
             margin: 18px 0 8px
         }
 
+        .task-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 9px 0 9px 28px
+        }
+
         .task {
             display: flex;
+            flex: 1;
+            min-width: 0;
             gap: 10px;
-            margin: 9px 0 9px 28px
+            margin: 0
+        }
+
+        .inline-edit {
+            flex: 0 0 auto;
+            padding: 4px 7px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            color: var(--muted);
+            background: var(--card);
+            font-size: 11px
+        }
+
+        .inline-edit:hover,
+        .inline-edit:focus-visible {
+            color: var(--blue);
+            border-color: var(--blue)
         }
 
         .task.done span {
@@ -216,10 +321,12 @@
         }
 
         .dialog {
-            background: #fff;
+            background: var(--card);
             width: min(500px, 100%);
             padding: 22px;
-            border-radius: 12px
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow)
         }
 
         .field {
@@ -254,8 +361,12 @@
                 flex-direction: column
             }
 
+            .top {
+                align-items: flex-start
+            }
+
             .view {
-                padding: 15px
+                padding: 0 15px 35px
             }
         }
     </style>
@@ -268,13 +379,27 @@
             <div>
                 <h1>Arrears Tracking</h1><small id="stamp"></small>
             </div>
-            <div class="actions"><button onclick="csvFile.click()">Import CSV</button><input hidden type="file"
-                    id="csvFile" accept=".csv" onchange="importCSV(event)"><button onclick="exportCSV()">Export
-                    CSV</button><button class="primary" onclick="recordDlg()">+ Add record</button></div>
+            <div class="actions">
+                <div class="actions" id="arrearsFileActions">
+                    <button onclick="csvFile.click()">Import CSV</button>
+                    <input hidden type="file" id="csvFile" accept=".csv" onchange="importCSV(event)">
+                    <button onclick="exportCSV()">Export CSV</button>
+                </div>
+                <div class="actions" id="nfcFileActions" hidden>
+                    <button onclick="nfcFile.click()">Import NFC CSV</button>
+                    <input hidden type="file" id="nfcFile" accept=".csv,text/csv" onchange="importNfcCSV(event)">
+                    <button onclick="exportNfcCSV()">Export NFC CSV</button>
+                </div>
+                <button class="primary" id="addContextAction" onclick="recordDlg()">+ Add record</button>
+            </div>
         </div>
-        <div class="tabs"><button id="tabA" class="tab active" onclick="show('arrears')">Arrears
-                Tracking</button><button id="tabN" class="tab" onclick="show('nfc')">NFC Batch Overview</button></div>
     </header>
+    <nav class="tabs" aria-label="Tracker views">
+        <div class="tabs-inner">
+            <button id="tabA" class="tab active" onclick="show('arrears')">Arrears Tracking</button>
+            <button id="tabN" class="tab" onclick="show('nfc')">NFC Batch Overview</button>
+        </div>
+    </nav>
     <section id="arrears" class="view">
         <div id="batchnav" class="batchnav"></div>
         <div id="arrearsBody"></div>
@@ -284,10 +409,8 @@
             <div>
                 <h2>NFC Batch Overview</h2><strong id="overall"></strong>
             </div>
-            <div class="actions"><button onclick="nfcFile.click()">Import NFC CSV</button><input hidden type="file"
-                    id="nfcFile" accept=".csv,text/csv" onchange="importNfcCSV(event)"><button
-                    onclick="exportNfcCSV()">Export NFC CSV</button></div>
         </div>
+        <p class="edit-hint">Double-click a batch card to show its add and edit controls.</p>
         <div id="nfcGrid" class="nfc-grid"></div>
     </section>
     <div id="recordModal" class="modal">
@@ -300,17 +423,166 @@
                     onclick="saveRecord()">Save</button></div>
         </div>
     </div>
+    <div id="nfcTaskModal" class="modal">
+        <form class="dialog" id="nfcTaskForm">
+            <h3>Add NFC task</h3>
+            <div class="field"><label for="nfcBatchName">Batch name</label><input id="nfcBatchName" required></div>
+            <div class="field"><label for="nfcPeriod">Period</label><input id="nfcPeriod" required></div>
+            <div class="field"><label for="nfcSection">Section</label><input id="nfcSection" required></div>
+            <div class="field"><label for="nfcTaskName">Task</label><input id="nfcTaskName" required></div>
+            <div class="dialogfoot">
+                <button type="button" onclick="closeNfcTaskDlg()">Cancel</button>
+                <button class="primary" type="submit">Add task</button>
+            </div>
+        </form>
+    </div>
+    <div id="nfcEditModal" class="modal">
+        <form class="dialog" id="nfcEditForm">
+            <h3 id="nfcEditTitle">Edit NFC item</h3>
+            <div class="field"><label id="nfcEditNameLabel" for="nfcEditName">Name</label><input id="nfcEditName" required></div>
+            <div class="field" id="nfcEditPeriodField"><label for="nfcEditPeriod">Period</label><input id="nfcEditPeriod" required></div>
+            <div class="dialogfoot">
+                <button type="button" onclick="closeNfcEditDlg()">Cancel</button>
+                <button class="primary" type="submit">Save changes</button>
+            </div>
+        </form>
+    </div>
+    <div id="nfcSectionModal" class="modal">
+        <form class="dialog" id="nfcSectionForm">
+            <h3>Add NFC section</h3>
+            <div class="field"><label for="nfcSectionName">Section name</label><input id="nfcSectionName" required></div>
+            <div class="dialogfoot">
+                <button type="button" onclick="closeNfcSectionDlg()">Cancel</button>
+                <button class="primary" type="submit">Add section</button>
+            </div>
+        </form>
+    </div>
     <script>
-        const KEY = 'arrearsTrackingDataV2', NKEY = 'nfcOverviewDataV2';
+        const KEY = 'arrearsTrackingDataV2', NKEY = 'nfcOverviewDataV2', TAB_KEY = 'arrearsTrackingActiveTab';
         let data = JSON.parse(localStorage.getItem(KEY) || '{"activeId":null,"batches":[]}');
         let nfcData = JSON.parse(localStorage.getItem(NKEY) || '{"batches":[]}');
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const save = () => localStorage.setItem(KEY, JSON.stringify(data)); const batch = () => data.batches.find(x => x.id === data.activeId) || data.batches[0];
-        function show(v) { arrears.hidden = v !== 'arrears'; nfc.hidden = v !== 'nfc'; tabA.classList.toggle('active', v === 'arrears'); tabN.classList.toggle('active', v === 'nfc'); if (v === 'nfc') renderNFC() }
+        function show(v) { if (v !== 'nfc' && v !== 'arrears') v = 'arrears'; localStorage.setItem(TAB_KEY, v); arrears.hidden = v !== 'arrears'; nfc.hidden = v !== 'nfc'; arrearsFileActions.hidden = v !== 'arrears'; nfcFileActions.hidden = v !== 'nfc'; addContextAction.hidden = v === 'nfc'; addContextAction.textContent = '+ Add record'; addContextAction.onclick = recordDlg; tabA.classList.toggle('active', v === 'arrears'); tabN.classList.toggle('active', v === 'nfc'); if (v === 'nfc') renderNFC() }
         function render() { let b = batch(); batchnav.innerHTML = data.batches.map(x => `<button class="batchbtn ${x === b ? 'active' : ''}" onclick="data.activeId='${x.id}';save();render()">${esc(x.name)} (${x.records.length})</button>`).join(''); if (!b) { arrearsBody.innerHTML = '<div class="empty"><h2>No data loaded</h2><p>Import a CSV file to begin.</p></div>'; return } let paid = b.records.filter(x => x.paid).length; arrearsBody.innerHTML = `<div class="head"><div><h2>${esc(b.name)}</h2><a class="source" href="${esc(b.sourceUrl)}" target="_blank">${esc(b.sourceLabel)}</a></div></div><div class="summary">Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length - paid}</div><div class="tablewrap"><table><thead><tr><th>Exchange ID</th><th>Name</th><th>Remarks</th><th>Arrears Paid</th><th>Actions</th></tr></thead><tbody>${b.records.map((r, i) => `<tr><td>${esc(r.exchangeId)}</td><td>${esc(r.name)}</td><td class="${r.paid ? 'paid' : ''}">${esc(r.remarks)}</td><td><label><input type="checkbox" ${r.paid ? 'checked' : ''} onchange="togglePaid(${i},this.checked)"> ${r.paid ? 'Paid' : 'Outstanding'}</label></td><td><button onclick="recordDlg(${i})">Edit</button> <button onclick="del(${i})">Delete</button></td></tr>`).join('')}</tbody></table></div>` }
         function togglePaid(i, v) { batch().records[i].paid = v; save(); render() } function del(i) { if (confirm('Delete this record?')) { batch().records.splice(i, 1); save(); render() } } function recordDlg(i = '') { if (!batch()) return alert('Import CSV data first.'); editIdx.value = i; if (i !== '') { let r = batch().records[i]; eid.value = r.exchangeId; nm.value = r.name; rem.value = r.remarks } else { eid.value = nm.value = rem.value = '' } recordModal.classList.add('open') } function closeM() { recordModal.classList.remove('open') } function saveRecord() { let i = editIdx.value, r = { exchangeId: eid.value.trim(), name: nm.value.trim(), remarks: rem.value.trim(), paid: i === '' ? false : batch().records[+i].paid }; if (i === '') batch().records.push(r); else batch().records[+i] = r; save(); closeM(); render() }
         function ce(v) { v = String(v ?? ''); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v } function exportCSV() { let h = ['Batch', 'Source Label', 'Source URL', 'Exchange ID', 'Name', 'Remarks', 'Arrears Paid'], a = [h.join(',')]; data.batches.forEach(b => b.records.forEach(r => a.push([b.name, b.sourceLabel, b.sourceUrl, r.exchangeId, r.name, r.remarks, r.paid ? 'Yes' : 'No'].map(ce).join(',')))); let x = document.createElement('a'); x.href = URL.createObjectURL(new Blob(['\ufeff' + a.join('\r\n')], { type: 'text/csv' })); x.download = 'arrears-tracking-current.csv'; x.click() }
         function parse(t) { let a = [], r = [], c = '', q = false; for (let i = 0; i < t.length; i++) { let x = t[i]; if (q) { if (x === '"' && t[i + 1] === '"') { c += '"'; i++ } else if (x === '"') q = false; else c += x } else if (x === '"') q = true; else if (x === ',') { r.push(c); c = '' } else if (x === '\n') { r.push(c.replace(/\r$/, '')); a.push(r); r = []; c = '' } else c += x } if (c || r.length) { r.push(c); a.push(r) } return a } function importCSV(e) { let f = e.target.files[0], fr = new FileReader; fr.onload = () => { try { let rows = parse(fr.result.replace(/^\ufeff/, '')), h = rows.shift().map(x => x.trim().toLowerCase()), idx = n => h.indexOf(n), map = new Map; rows.forEach(r => { let bn = (r[idx('batch')] || '').trim(); if (!bn) return; if (!map.has(bn)) map.set(bn, { id: 'b' + map.size + Date.now(), name: bn, sourceLabel: r[idx('source label')] || 'Source list', sourceUrl: r[idx('source url')] || '#', records: [] }); if (r[idx('exchange id')] || r[idx('name')]) map.get(bn).records.push({ exchangeId: r[idx('exchange id')] || '', name: r[idx('name')] || '', remarks: r[idx('remarks')] || '', paid: /^(yes|true|paid|1)$/i.test(r[idx('arrears paid')] || '') }) }); data = { activeId: null, batches: [...map.values()] }; data.activeId = data.batches[0]?.id || null; save(); render() } catch (x) { alert('Import failed: ' + x.message) } e.target.value = '' }; fr.readAsText(f) }
         function saveNfc() { localStorage.setItem(NKEY, JSON.stringify(nfcData)) }
+        function openNfcTaskDlg(batchIndex = 0, sectionIndex = -1) {
+            const selectedBatch = nfcData.batches[batchIndex];
+            nfcBatchName.value = selectedBatch?.name || '';
+            nfcPeriod.value = selectedBatch?.period || '';
+            nfcSection.value = selectedBatch?.sections[sectionIndex]?.name || '';
+            nfcTaskName.value = '';
+            nfcTaskModal.classList.add('open');
+            nfcBatchName.focus();
+        }
+        function closeNfcTaskDlg() { nfcTaskModal.classList.remove('open') }
+        let nfcSectionBatchIndex = null;
+        function addNfcSection(batchIndex) {
+            nfcSectionBatchIndex = batchIndex;
+            nfcSectionName.value = '';
+            nfcSectionModal.classList.add('open');
+            nfcSectionName.focus();
+        }
+        function closeNfcSectionDlg() { nfcSectionModal.classList.remove('open'); nfcSectionBatchIndex = null }
+        nfcSectionForm.addEventListener('submit', event => {
+            event.preventDefault();
+            if (nfcSectionBatchIndex === null) return;
+            const name = nfcSectionName.value.trim();
+            const batch = nfcData.batches[nfcSectionBatchIndex];
+            if (batch.sections.some(section => section.name.toLowerCase() === name.toLowerCase())) {
+                alert('That section already exists in this batch.');
+                return;
+            }
+            batch.sections.push({ name, tasks: [] });
+            saveNfc();
+            renderNFC();
+            closeNfcSectionDlg();
+        });
+        function toggleNfcEditMode(event, batchIndex) {
+            if (event.type === 'dblclick' && event.target.closest('button, input, label')) return;
+            const card = event.currentTarget;
+            const enabled = !card.classList.contains('edit-mode');
+            card.classList.toggle('edit-mode', enabled);
+            if (enabled) nfcEditMode.add(batchIndex);
+            else nfcEditMode.delete(batchIndex);
+        }
+        let nfcEditTarget = null;
+        const nfcEditMode = new Set();
+        function editNfcItem(type, batchIndex, sectionIndex = -1, taskIndex = -1) {
+            nfcEditTarget = { type, batchIndex, sectionIndex, taskIndex };
+            const batch = nfcData.batches[batchIndex];
+            const title = document.getElementById('nfcEditTitle');
+            const nameLabel = document.getElementById('nfcEditNameLabel');
+            const nameInput = document.getElementById('nfcEditName');
+            const periodField = document.getElementById('nfcEditPeriodField');
+            const periodInput = document.getElementById('nfcEditPeriod');
+
+            if (type === 'batch') {
+                title.textContent = 'Edit NFC batch';
+                nameLabel.textContent = 'Batch name';
+                nameInput.value = batch.name;
+                periodField.hidden = false;
+                periodInput.value = batch.period || '';
+            } else if (type === 'section') {
+                title.textContent = 'Edit NFC section';
+                nameLabel.textContent = 'Section name';
+                nameInput.value = batch.sections[sectionIndex].name;
+                periodField.hidden = true;
+            } else {
+                title.textContent = 'Edit NFC task';
+                nameLabel.textContent = 'Task name';
+                nameInput.value = batch.sections[sectionIndex].tasks[taskIndex].name;
+                periodField.hidden = true;
+            }
+            periodInput.required = type === 'batch';
+            nfcEditModal.classList.add('open');
+            nameInput.focus();
+            nameInput.select();
+        }
+        function closeNfcEditDlg() { nfcEditModal.classList.remove('open'); nfcEditTarget = null }
+        nfcEditForm.addEventListener('submit', event => {
+            event.preventDefault();
+            if (!nfcEditTarget) return;
+            const { type, batchIndex, sectionIndex, taskIndex } = nfcEditTarget;
+            const name = document.getElementById('nfcEditName').value.trim();
+            const batch = nfcData.batches[batchIndex];
+            if (type === 'batch') {
+                batch.name = name;
+                batch.period = document.getElementById('nfcEditPeriod').value.trim();
+            } else if (type === 'section') {
+                batch.sections[sectionIndex].name = name;
+            } else {
+                batch.sections[sectionIndex].tasks[taskIndex].name = name;
+            }
+            saveNfc();
+            closeNfcEditDlg();
+            renderNFC();
+        });
+        nfcTaskForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const name = nfcBatchName.value.trim();
+            const period = nfcPeriod.value.trim();
+            const sectionName = nfcSection.value.trim();
+            const taskName = nfcTaskName.value.trim();
+            let currentBatch = nfcData.batches.find(batch => batch.name.toLowerCase() === name.toLowerCase());
+            if (!currentBatch) {
+                currentBatch = { name, period, sections: [] };
+                nfcData.batches.push(currentBatch);
+            } else if (!currentBatch.period) {
+                currentBatch.period = period;
+            }
+            let section = currentBatch.sections.find(item => item.name.toLowerCase() === sectionName.toLowerCase());
+            if (!section) {
+                section = { name: sectionName, tasks: [] };
+                currentBatch.sections.push(section);
+            }
+            section.tasks.push({ name: taskName, completed: false });
+            saveNfc();
+            renderNFC();
+            closeNfcTaskDlg();
+        });
         function exportNfcCSV() {
             const rows = [['Batch', 'Period', 'Section', 'Task', 'Completed']];
             nfcData.batches.forEach(b => b.sections.forEach(sec => sec.tasks.forEach(task => rows.push([b.name, b.period, sec.name, task.name, task.completed ? 'Yes' : 'No']))));
@@ -332,7 +604,7 @@
                     });
                     if (!batches.length) throw new Error('No valid NFC checklist items were found.');
                     if (nfcData.batches.length && !confirm('Importing will replace the current NFC checklist data. Continue?')) return;
-                    nfcData = { batches }; saveNfc(); renderNFC(); alert('NFC checklist imported successfully.');
+                            nfcData = { batches }; nfcEditMode.clear(); saveNfc(); renderNFC(); alert('NFC checklist imported successfully.');
                 } catch (err) { alert('NFC CSV import failed: ' + err.message) } finally { e.target.value = '' }
             }; fr.readAsText(f)
         }
@@ -340,10 +612,10 @@
         function renderNFC() {
             if (!nfcData.batches.length) { overall.textContent = ''; nfcGrid.innerHTML = '<div class="empty" style="grid-column:1/-1"><h2>No NFC checklist loaded</h2><p>Import an NFC CSV file to begin.</p></div>'; return }
             let total = 0, done = 0;
-            nfcGrid.innerHTML = nfcData.batches.map((b, bi) => { let bt = 0, bd = 0; const groups = b.sections.map((sec, si) => `<div class="phase">- ${esc(sec.name)}</div>${sec.tasks.map((task, ti) => { total++; bt++; if (task.completed) { done++; bd++ } return `<label class="task ${task.completed ? 'done' : ''}"><input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleNfc(${bi},${si},${ti},this.checked)"><span>${esc(task.name)}</span></label>${task.name === 'Process Payment' ? '<div class="sub">(Mbr Creation/Key-In/KIV)</div>' : ''}` }).join('')}`).join(''); return `<article class="card"><h3>${esc(b.name)}</h3><div class="period">${esc(b.period)}</div>${groups}<div class="progress">${bd} of ${bt} completed</div></article>` }).join('');
+            nfcGrid.innerHTML = nfcData.batches.map((b, bi) => { let bt = 0, bd = 0; const groups = b.sections.map((sec, si) => `<div class="phase"><span>- ${esc(sec.name)}</span><div class="nfc-edit-controls"><button class="inline-edit" type="button" onclick="editNfcItem('section',${bi},${si})" aria-label="Edit section ${esc(sec.name)}">Edit</button><button class="inline-edit" type="button" onclick="openNfcTaskDlg(${bi},${si})">Add task</button></div></div>${sec.tasks.map((task, ti) => { total++; bt++; if (task.completed) { done++; bd++ } return `<div class="task-row"><label class="task ${task.completed ? 'done' : ''}"><input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleNfc(${bi},${si},${ti},this.checked)"><span>${esc(task.name)}</span></label><button class="inline-edit nfc-edit-controls" type="button" onclick="editNfcItem('task',${bi},${si},${ti})" aria-label="Edit task ${esc(task.name)}">Edit</button></div>${task.name === 'Process Payment' ? '<div class="sub">(Mbr Creation/Key-In/KIV)</div>' : ''}` }).join('')}`).join(''); return `<article class="card nfc-batch-card ${nfcEditMode.has(bi) ? 'edit-mode' : ''}" ondblclick="toggleNfcEditMode(event,${bi})" tabindex="0" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleNfcEditMode(event,${bi})}" title="Double-click to show add and edit controls"><div class="nfc-card-head"><h3>${esc(b.name)}</h3><div class="nfc-edit-controls"><button class="inline-edit" type="button" onclick="editNfcItem('batch',${bi})">Edit batch</button><button class="inline-edit" type="button" onclick="addNfcSection(${bi})">Add section</button></div></div><div class="period">${esc(b.period)}</div>${groups}<div class="progress">${bd} of ${bt} completed</div></article>` }).join('');
             overall.textContent = `Overall: ${done} of ${total} completed`;
         }
-        stamp.textContent = new Intl.DateTimeFormat('en-SG', { dateStyle: 'full', timeStyle: 'short' }).format(new Date); render();
+        stamp.textContent = new Intl.DateTimeFormat('en-SG', { dateStyle: 'full', timeStyle: 'short' }).format(new Date); render(); show(localStorage.getItem(TAB_KEY));
     </script>
 </body>
 
