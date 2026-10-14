@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Arrears Tracking</title>
+    <script src="../assets/theme.js"></script>
+    <script src="../assets/repo-data.js"></script>
     <style>
         :root {
             --navy: #102a43;
@@ -75,6 +77,11 @@
             border-bottom: 1px solid var(--line)
         }
 
+        :root[data-theme="dark"] .tabs {
+            background-color: #182332;
+            border-color: var(--line);
+        }
+
         .tabs-inner {
             max-width: 1180px;
             margin: 0 auto;
@@ -94,9 +101,9 @@
         }
 
         .primary {
-            background: #1c3447;
-            color: #fff;
-            border: 1px solid #1c3447;
+            background: #d2eaff;
+            color: #1769aa;
+            border: 1px solid #e8f2fb;
         }
 
         .tab {
@@ -182,12 +189,12 @@
         }
 
         th {
-            background: #edf4fa;
+            background: var(--pale);
             color: var(--navy)
         }
 
         tbody tr {
-            background: #fff
+            background: var(--card)
         }
 
         .paid {
@@ -439,8 +446,10 @@
     <div id="nfcEditModal" class="modal">
         <form class="dialog" id="nfcEditForm">
             <h3 id="nfcEditTitle">Edit NFC item</h3>
-            <div class="field"><label id="nfcEditNameLabel" for="nfcEditName">Name</label><input id="nfcEditName" required></div>
-            <div class="field" id="nfcEditPeriodField"><label for="nfcEditPeriod">Period</label><input id="nfcEditPeriod" required></div>
+            <div class="field"><label id="nfcEditNameLabel" for="nfcEditName">Name</label><input id="nfcEditName"
+                    required></div>
+            <div class="field" id="nfcEditPeriodField"><label for="nfcEditPeriod">Period</label><input
+                    id="nfcEditPeriod" required></div>
             <div class="dialogfoot">
                 <button type="button" onclick="closeNfcEditDlg()">Cancel</button>
                 <button class="primary" type="submit">Save changes</button>
@@ -450,7 +459,8 @@
     <div id="nfcSectionModal" class="modal">
         <form class="dialog" id="nfcSectionForm">
             <h3>Add NFC section</h3>
-            <div class="field"><label for="nfcSectionName">Section name</label><input id="nfcSectionName" required></div>
+            <div class="field"><label for="nfcSectionName">Section name</label><input id="nfcSectionName" required>
+            </div>
             <div class="dialogfoot">
                 <button type="button" onclick="closeNfcSectionDlg()">Cancel</button>
                 <button class="primary" type="submit">Add section</button>
@@ -466,7 +476,7 @@
         function render() { let b = batch(); batchnav.innerHTML = data.batches.map(x => `<button class="batchbtn ${x === b ? 'active' : ''}" onclick="data.activeId='${x.id}';save();render()">${esc(x.name)} (${x.records.length})</button>`).join(''); if (!b) { arrearsBody.innerHTML = '<div class="empty"><h2>No data loaded</h2><p>Import a CSV file to begin.</p></div>'; return } let paid = b.records.filter(x => x.paid).length; arrearsBody.innerHTML = `<div class="head"><div><h2>${esc(b.name)}</h2><a class="source" href="${esc(b.sourceUrl)}" target="_blank">${esc(b.sourceLabel)}</a></div></div><div class="summary">Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length - paid}</div><div class="tablewrap"><table><thead><tr><th>Exchange ID</th><th>Name</th><th>Remarks</th><th>Arrears Paid</th><th>Actions</th></tr></thead><tbody>${b.records.map((r, i) => `<tr><td>${esc(r.exchangeId)}</td><td>${esc(r.name)}</td><td class="${r.paid ? 'paid' : ''}">${esc(r.remarks)}</td><td><label><input type="checkbox" ${r.paid ? 'checked' : ''} onchange="togglePaid(${i},this.checked)"> ${r.paid ? 'Paid' : 'Outstanding'}</label></td><td><button onclick="recordDlg(${i})">Edit</button> <button onclick="del(${i})">Delete</button></td></tr>`).join('')}</tbody></table></div>` }
         function togglePaid(i, v) { batch().records[i].paid = v; save(); render() } function del(i) { if (confirm('Delete this record?')) { batch().records.splice(i, 1); save(); render() } } function recordDlg(i = '') { if (!batch()) return alert('Import CSV data first.'); editIdx.value = i; if (i !== '') { let r = batch().records[i]; eid.value = r.exchangeId; nm.value = r.name; rem.value = r.remarks } else { eid.value = nm.value = rem.value = '' } recordModal.classList.add('open') } function closeM() { recordModal.classList.remove('open') } function saveRecord() { let i = editIdx.value, r = { exchangeId: eid.value.trim(), name: nm.value.trim(), remarks: rem.value.trim(), paid: i === '' ? false : batch().records[+i].paid }; if (i === '') batch().records.push(r); else batch().records[+i] = r; save(); closeM(); render() }
         function ce(v) { v = String(v ?? ''); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v } function exportCSV() { let h = ['Batch', 'Source Label', 'Source URL', 'Exchange ID', 'Name', 'Remarks', 'Arrears Paid'], a = [h.join(',')]; data.batches.forEach(b => b.records.forEach(r => a.push([b.name, b.sourceLabel, b.sourceUrl, r.exchangeId, r.name, r.remarks, r.paid ? 'Yes' : 'No'].map(ce).join(',')))); let x = document.createElement('a'); x.href = URL.createObjectURL(new Blob(['\ufeff' + a.join('\r\n')], { type: 'text/csv' })); x.download = 'arrears-tracking-current.csv'; x.click() }
-        function parse(t) { let a = [], r = [], c = '', q = false; for (let i = 0; i < t.length; i++) { let x = t[i]; if (q) { if (x === '"' && t[i + 1] === '"') { c += '"'; i++ } else if (x === '"') q = false; else c += x } else if (x === '"') q = true; else if (x === ',') { r.push(c); c = '' } else if (x === '\n') { r.push(c.replace(/\r$/, '')); a.push(r); r = []; c = '' } else c += x } if (c || r.length) { r.push(c); a.push(r) } return a } function importCSV(e) { let f = e.target.files[0], fr = new FileReader; fr.onload = () => { try { let rows = parse(fr.result.replace(/^\ufeff/, '')), h = rows.shift().map(x => x.trim().toLowerCase()), idx = n => h.indexOf(n), map = new Map; rows.forEach(r => { let bn = (r[idx('batch')] || '').trim(); if (!bn) return; if (!map.has(bn)) map.set(bn, { id: 'b' + map.size + Date.now(), name: bn, sourceLabel: r[idx('source label')] || 'Source list', sourceUrl: r[idx('source url')] || '#', records: [] }); if (r[idx('exchange id')] || r[idx('name')]) map.get(bn).records.push({ exchangeId: r[idx('exchange id')] || '', name: r[idx('name')] || '', remarks: r[idx('remarks')] || '', paid: /^(yes|true|paid|1)$/i.test(r[idx('arrears paid')] || '') }) }); data = { activeId: null, batches: [...map.values()] }; data.activeId = data.batches[0]?.id || null; save(); render() } catch (x) { alert('Import failed: ' + x.message) } e.target.value = '' }; fr.readAsText(f) }
+        function parse(t) { let a = [], r = [], c = '', q = false; for (let i = 0; i < t.length; i++) { let x = t[i]; if (q) { if (x === '"' && t[i + 1] === '"') { c += '"'; i++ } else if (x === '"') q = false; else c += x } else if (x === '"') q = true; else if (x === ',') { r.push(c); c = '' } else if (x === '\n') { r.push(c.replace(/\r$/, '')); a.push(r); r = []; c = '' } else c += x } if (c || r.length) { r.push(c); a.push(r) } return a } function arrearsFromCSV(text) { let rows = parse(text.replace(/^\ufeff/, '')), h = rows.shift().map(x => x.trim().toLowerCase()), idx = n => h.indexOf(n), map = new Map; rows.forEach(r => { let bn = (r[idx('batch')] || '').trim(); if (!bn) return; if (!map.has(bn)) map.set(bn, { id: 'b' + map.size + Date.now(), name: bn, sourceLabel: r[idx('source label')] || 'Source list', sourceUrl: r[idx('source url')] || '#', records: [] }); if (r[idx('exchange id')] || r[idx('name')]) map.get(bn).records.push({ exchangeId: r[idx('exchange id')] || '', name: r[idx('name')] || '', remarks: r[idx('remarks')] || '', paid: /^(yes|true|paid|1)$/i.test(r[idx('arrears paid')] || '') }) }); let d = { activeId: null, batches: [...map.values()] }; d.activeId = d.batches[0]?.id || null; return d } function importCSV(e) { let f = e.target.files[0], fr = new FileReader; fr.onload = () => { try { data = arrearsFromCSV(fr.result); save(); render() } catch (x) { alert('Import failed: ' + x.message) } e.target.value = '' }; fr.readAsText(f) }
         function saveNfc() { localStorage.setItem(NKEY, JSON.stringify(nfcData)) }
         function openNfcTaskDlg(batchIndex = 0, sectionIndex = -1) {
             const selectedBatch = nfcData.batches[batchIndex];
@@ -589,10 +599,8 @@
             const csv = '\ufeff' + rows.map(r => r.map(ce).join(',')).join('\r\n'), a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'nfc-batch-checklist.csv'; a.click(); URL.revokeObjectURL(a.href);
         }
-        function importNfcCSV(e) {
-            const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => {
-                try {
-                    const rows = parse(String(fr.result).replace(/^\ufeff/, '')); if (rows.length < 2) throw new Error('The CSV has no checklist rows.');
+        function nfcFromCSV(text) {
+                    const rows = parse(String(text).replace(/^\ufeff/, '')); if (rows.length < 2) throw new Error('The CSV has no checklist rows.');
                     const h = rows.shift().map(x => x.trim().toLowerCase()), ix = n => h.indexOf(n), required = ['batch', 'period', 'section', 'task', 'completed'];
                     if (required.some(x => ix(x) < 0)) throw new Error('Required columns: Batch, Period, Section, Task, Completed.');
                     const batches = [], batchMap = new Map();
@@ -603,8 +611,14 @@
                         sec.tasks.push({ name: tn, completed: /^(yes|true|completed|done|1)$/i.test((r[ix('completed')] || '').trim()) });
                     });
                     if (!batches.length) throw new Error('No valid NFC checklist items were found.');
+                    return batches;
+        }
+        function importNfcCSV(e) {
+            const f = e.target.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => {
+                try {
+                    const batches = nfcFromCSV(fr.result);
                     if (nfcData.batches.length && !confirm('Importing will replace the current NFC checklist data. Continue?')) return;
-                            nfcData = { batches }; nfcEditMode.clear(); saveNfc(); renderNFC(); alert('NFC checklist imported successfully.');
+                    nfcData = { batches }; nfcEditMode.clear(); saveNfc(); renderNFC(); alert('NFC checklist imported successfully.');
                 } catch (err) { alert('NFC CSV import failed: ' + err.message) } finally { e.target.value = '' }
             }; fr.readAsText(f)
         }
@@ -616,6 +630,18 @@
             overall.textContent = `Overall: ${done} of ${total} completed`;
         }
         stamp.textContent = new Intl.DateTimeFormat('en-SG', { dateStyle: 'full', timeStyle: 'short' }).format(new Date); render(); show(localStorage.getItem(TAB_KEY));
+        syncRepoFile({
+            url: '../data/arrears.csv', key: KEY, apply: text => {
+                const next = arrearsFromCSV(text); if (!next.batches.length) return false;
+                data = next; save(); render();
+            }
+        });
+        syncRepoFile({
+            url: '../data/nfc.csv', key: NKEY, apply: text => {
+                const batches = nfcFromCSV(text);
+                nfcData = { batches }; nfcEditMode.clear(); saveNfc(); renderNFC();
+            }
+        });
     </script>
 </body>
 

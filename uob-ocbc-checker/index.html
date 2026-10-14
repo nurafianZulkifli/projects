@@ -39,12 +39,27 @@
         header {
             background: linear-gradient(120deg, var(--navy), var(--blue));
             color: white;
-            padding: 24px clamp(18px, 4vw, 54px)
+            padding: 26px clamp(18px, 4vw, 54px)
         }
 
         header h1 {
             margin: 0;
-            font-size: clamp(24px, 4vw, 38px)
+            font-size: clamp(25px, 4vw, 38px)
+        }
+
+        .top {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
         }
 
         header p {
@@ -53,10 +68,7 @@
         }
 
         .nav {
-            display: flex;
-            gap: 8px;
-            overflow: auto;
-            padding: 14px clamp(12px, 4vw, 54px);
+            padding: 0 clamp(12px, 4vw, 54px);
             background: white;
             border-bottom: 1px solid var(--line);
             position: sticky;
@@ -64,13 +76,22 @@
             z-index: 5
         }
 
+        .nav-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 13px 0
+        }
+
         .nav button {
             white-space: nowrap;
             border: 0;
             background: transparent;
-            padding: 10px 14px;
-            border-radius: 9px;
-            font-weight: 700;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-weight: 600;
             color: var(--muted);
             cursor: pointer
         }
@@ -355,12 +376,17 @@
 
 <body>
     <header>
-        <h1>UOB-OCBC Branch Checker</h1>
+        <div class="top">
+            <h1>UOB-OCBC Branch Checker</h1>
+            <div class="actions"></div>
+        </div>
     </header>
     <nav class="nav">
-        <button class="active" data-tab="uob">UOB Branch Checker</button><button data-tab="ocbc">OCBC Branch
-            Checker</button><button data-tab="membership">Membership Calculator</button><button data-tab="manage">UOB /
-            OCBC Full Lists</button>
+        <div class="nav-inner">
+            <button class="active" data-tab="uob">UOB Branch Checker</button><button data-tab="ocbc">OCBC Branch
+                Checker</button><button data-tab="membership">Membership Calculator</button><button
+                data-tab="manage">UOB / OCBC Full Lists</button>
+        </div>
     </nav>
     <main>
         <section id="uob" class="panel active">

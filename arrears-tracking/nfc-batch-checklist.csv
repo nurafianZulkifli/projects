@@ -1,0 +1,29 @@
+﻿Batch,Period,Section,Task,Completed
+NFC Batch 64,Oct - Dec,Filtering,Prepare List,Yes
+NFC Batch 64,Oct - Dec,Filtering,Send to NFC,Yes
+NFC Batch 64,Oct - Dec,Billing,Prepare List,Yes
+NFC Batch 64,Oct - Dec,Billing,Send to NFC,Yes
+NFC Batch 64,Oct - Dec,Payment,Data Entry,Yes
+NFC Batch 64,Oct - Dec,Payment,Payment Received,Yes
+NFC Batch 64,Oct - Dec,Payment,Process Payment,No
+NFC Batch 65,Nov - Dec,Filtering,Prepare List,Yes
+NFC Batch 65,Nov - Dec,Filtering,Send to NFC,Yes
+NFC Batch 65,Nov - Dec,Billing,Prepare List,Yes
+NFC Batch 65,Nov - Dec,Billing,Send to NFC,Yes
+NFC Batch 65,Nov - Dec,Payment,Data Entry,Yes
+NFC Batch 65,Nov - Dec,Payment,Payment Received,Yes
+NFC Batch 65,Nov - Dec,Payment,Process Payment,No
+NFC Batch 66,Dec - Dec,Filtering,Prepare List,Yes
+NFC Batch 66,Dec - Dec,Filtering,Send to NFC,Yes
+NFC Batch 66,Dec - Dec,Billing,Prepare List,No
+NFC Batch 66,Dec - Dec,Billing,Send to NFC,No
+NFC Batch 66,Dec - Dec,Payment,Data Entry,No
+NFC Batch 66,Dec - Dec,Payment,Payment Received,No
+NFC Batch 66,Dec - Dec,Payment,Process Payment,No
+NFC Batch 67,RNWL,Filtering,Prepare List,No
+NFC Batch 67,RNWL,Filtering,Send to NFC,No
+NFC Batch 67,RNWL,Billing,Prepare List,No
+NFC Batch 67,RNWL,Billing,Send to NFC,No
+NFC Batch 67,RNWL,Payment,Data Entry,No
+NFC Batch 67,RNWL,Payment,Payment Received,No
+NFC Batch 67,RNWL,Payment,Process Payment,No

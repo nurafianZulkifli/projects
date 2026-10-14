@@ -44,29 +44,50 @@
             font-size: clamp(25px, 4vw, 38px)
         }
 
+        .top {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
         header p {
             margin: 8px 0 0;
             opacity: .88
         }
 
         .nav {
-            display: flex;
-            gap: 8px;
-            padding: 13px clamp(12px, 4vw, 54px);
+            padding: 0 clamp(12px, 4vw, 54px);
             background: white;
             border-bottom: 1px solid var(--line);
             position: sticky;
             top: 0;
-            z-index: 4;
-            overflow: auto
+            z-index: 4
+        }
+
+        .nav-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 13px 0
         }
 
         .nav button {
             border: 0;
             background: transparent;
-            padding: 10px 14px;
-            border-radius: 9px;
-            font-weight: 750;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-weight: 600;
             color: var(--muted);
             cursor: pointer;
             white-space: nowrap
@@ -297,11 +318,18 @@
 
 <body>
     <header>
-        <h1>Union–SSIC Checker</h1>
-        <p>Find the assigned union and industry using an SSIC code.</p>
+        <div class="top">
+            <div>
+                <h1>Union–SSIC Checker</h1>
+                <p>Find the assigned union and industry using an SSIC code.</p>
+            </div>
+            <div class="actions"></div>
+        </div>
     </header>
-    <nav class="nav"><button class="active" data-tab="checker">SSIC Checker</button><button data-tab="list">Full SSIC
-            List</button></nav>
+    <nav class="nav">
+        <div class="nav-inner"><button class="active" data-tab="checker">SSIC Checker</button><button
+                data-tab="list">Full SSIC List</button></div>
+    </nav>
     <main>
         <section id="checker" class="panel active">
             <div class="card">

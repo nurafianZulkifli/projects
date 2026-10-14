@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Leave Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="./assets/theme.js"></script>
+    <script src="../assets/theme.js"></script>
+    <script src="../assets/repo-data.js"></script>
     <style>
         :root {
             --navy: #0f2742;
@@ -732,6 +733,14 @@
         prev.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCalendar() }; next.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCalendar() };
         for (const ev of ['dragenter', 'dragover']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.add('drop') }); for (const ev of ['dragleave', 'drop']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.remove('drop') }); app.addEventListener('drop', e => { let f = e.dataTransfer.files[0]; if (f) { let dt = new DataTransfer(); dt.items.add(f); fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change')) } });
         render();
+        syncRepoFile({
+            url: '../data/leave.xlsx', key: 'leaveTrackerData', binary: true, apply: buffer => {
+                const next = parseWorkbook(XLSX.read(buffer, { cellDates: true }), 'Leave Tracker.xlsx');
+                state = next; save();
+                const d = new Date(next.events[0].date + 'T00:00:00'); viewDate = new Date(d.getFullYear(), d.getMonth(), 1);
+                render();
+            }
+        });
     </script>
 </body>
 
