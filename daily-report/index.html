@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Daily Work Tracker</title><style>
+:root{--border:#bbb;--yellow:#fff900;--green:#198754}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f7f8fa;color:#111}.wrap{max-width:1180px;margin:32px auto;padding:0 20px}.card{background:white;border-radius:14px;box-shadow:0 5px 24px #00000012;padding:22px}.date{font-size:32px;font-weight:800;text-align:center;margin-bottom:16px}.grid{display:grid;grid-template-columns:1.2fr .9fr;gap:28px}.tbl{border-collapse:collapse;width:100%;font-size:20px}.tbl td,.tbl th{border:1px solid #222;padding:9px}.tbl .label{font-weight:700}.tbl .hi{background:var(--yellow)}.tbl .num{width:105px;text-align:right;font-size:26px}.tbl .section{font-weight:800}.tbl .total{font-weight:800}.side{display:grid;grid-template-columns:1fr 190px;gap:28px;align-items:start}.small{font-size:18px}.small td{height:45px}.small .num{font-size:18px;width:78px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 0}.btn{border:0;border-radius:8px;padding:11px 15px;font-weight:700;cursor:pointer}.primary{background:#111;color:#fff}.secondary{background:#e9ecef}.status{font-size:14px;color:var(--green);font-weight:700;min-height:18px;margin-top:8px}.todo{margin-top:28px}.todo th{text-align:center}.todo td{font-size:16px}.editable{background:#fff}.editable:focus{outline:3px solid #bfe3cf;outline-offset:-3px}.calculated{background:#f2f2f2;font-weight:800}@media(max-width:850px){.grid,.side{grid-template-columns:1fr}.date{font-size:26px}.tbl{font-size:16px}.tbl .num{font-size:20px}}
+</style></head><body><div class="wrap"><div class="card"><div class="date">16/10/2026</div><div class="grid">
+<div><table class="tbl" id="main"><tbody>
+<tr><td class="label">Hardcopy (Creation of records<br>and/or assigned to Data Entry)</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="section">NFC (New Member Creation)</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label hi">U Portal</td><td class="num editable" contenteditable="true">39</td></tr>
+<tr><td class="label hi">U Portal (Check FP Bank Details)</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label hi">Mobile App</td><td class="num editable" contenteditable="true">8</td></tr>
+<tr><td class="label hi">Transfer</td><td class="num editable" contenteditable="true">28</td></tr>
+<tr><td class="label">CRM/Email follow-up</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label hi">Receipt Creation</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Create Giro Instruction</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Complete in-progress task</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Termination</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Update of PD</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Card Replacement</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="label">Gift Claim Processing</td><td class="num editable" contenteditable="true"></td></tr>
+<tr><td class="total">Total</td><td class="num total calculated" id="mainTotal">75</td></tr>
+</tbody></table><div class="actions"><button class="btn primary" onclick="copyMain()">Copy numeric column for Excel</button></div><div id="msg" class="status"></div></div>
+<div><div class="side"><div><table class="tbl"><tbody><tr><td class="label">IVIC/QC</td><td class="num editable unionInput" contenteditable="true"></td></tr><tr><td class="label">Union Cluster Creation</td><td class="num editable unionInput" contenteditable="true"></td></tr><tr><td class="total">Total</td><td class="num calculated" id="unionTotal">0</td></tr></tbody></table><br><table class="tbl"><tbody><tr><td class="total">Final Total</td><td class="num total calculated" id="finalTotal">75</td></tr></tbody></table></div>
+<div><table class="tbl small" id="second"><tbody><tr><td class="label">SIASU</td><td class="num editable sideInput" contenteditable="true"></td></tr><tr><td class="label">OS</td><td class="num editable sideInput" contenteditable="true"></td></tr><tr><td class="label">MA</td><td class="num editable sideInput" contenteditable="true"></td></tr><tr><td class="label">NXT MTH</td><td class="num editable sideInput" contenteditable="true">1</td></tr><tr><td class="label">LPD+1 DAY</td><td class="num editable sideInput" contenteditable="true">27</td></tr><tr><td class="total">Total</td><td class="num total calculated" id="sideTotal">28</td></tr></tbody></table></div></div>
+<table class="tbl todo"><thead><tr><th>TO DO</th><th>Status</th></tr></thead><tbody><tr><td class="editable" contenteditable="true">Batch 65 key in</td><td class="editable" contenteditable="true">Done</td></tr><tr><td class="editable" contenteditable="true">Batch 66 key in</td><td class="editable" contenteditable="true">Pend payment</td></tr></tbody></table></div>
+</div></div></div><script>
+const msg=t=>{document.getElementById('msg').textContent=t;setTimeout(()=>document.getElementById('msg').textContent='',1800)};
+async function cp(t){try{await navigator.clipboard.writeText(t);msg('Copied in Excel-ready vertical order.')}catch(e){const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove();msg('Copied in Excel-ready vertical order.')}}
+function vals(id){return [...document.querySelectorAll('#'+id+' td.num')].map(x=>x.innerText.trim()).join('\n')}
+function copyMain(){const cells=[...document.querySelectorAll('#main td.num')]; cp(cells.map(c=>c.innerText.trim()).join('\n'));}
+function n(el){const v=parseFloat(el.innerText.replace(/,/g,''));return Number.isFinite(v)?v:0}
+function show(v){return Number.isInteger(v)?String(v):String(Math.round(v*100)/100)}
+function calculate(){
+ const mainCells=[...document.querySelectorAll('#main td.num.editable')];
+ // Exclude Hardcopy and the NFC heading row; total the operational rows U Portal through Gift Claim Processing.
+ const main=mainCells.slice(2).reduce((a,c)=>a+n(c),0);
+ document.getElementById('mainTotal').innerText=show(main);
+ const union=[...document.querySelectorAll('.unionInput')].reduce((a,c)=>a+n(c),0);
+ document.getElementById('unionTotal').innerText=show(union);
+ document.getElementById('finalTotal').innerText=show(main+union);
+ const side=[...document.querySelectorAll('.sideInput')].reduce((a,c)=>a+n(c),0);
+ document.getElementById('sideTotal').innerText=show(side);
+}
+document.addEventListener('input',e=>{if(e.target.matches('.num.editable')) calculate()});
+document.addEventListener('paste',e=>{if(e.target.matches('.num.editable')) setTimeout(calculate,0)});
+calculate();
+</script></body></html>
