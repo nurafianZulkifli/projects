@@ -39,7 +39,21 @@ function calculate(){
  const side=[...document.querySelectorAll('.sideInput')].reduce((a,c)=>a+n(c),0);
  document.getElementById('sideTotal').innerText=show(side);
 }
-document.addEventListener('input',e=>{if(e.target.matches('.num.editable')) calculate()});
-document.addEventListener('paste',e=>{if(e.target.matches('.num.editable')) setTimeout(calculate,0)});
-calculate();
+const STORAGE_KEY='nfcDailyTrackerDataV1';
+function editableCells(){return [...document.querySelectorAll('[contenteditable="true"]')]}
+function saveLocal(){
+ const data=editableCells().map((el,i)=>({i,value:el.innerText}));
+ localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+function loadLocal(){
+ try{
+  const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+  const cells=editableCells();
+  data.forEach(x=>{if(cells[x.i]) cells[x.i].innerText=x.value ?? ''});
+ }catch(e){}
+ calculate();
+}
+document.addEventListener('input',e=>{if(e.target.matches('[contenteditable="true"]')){calculate();saveLocal()}});
+document.addEventListener('paste',e=>{if(e.target.matches('[contenteditable="true"]')) setTimeout(()=>{calculate();saveLocal()},0)});
+loadLocal();
 </script></body></html>
