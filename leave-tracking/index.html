@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="../assets/theme.js"></script>
     <script src="../assets/repo-data.js"></script>
-    <script src="../assets/sync.js"></script>
     <style>
         :root {
             --navy: #0f2742;
@@ -498,121 +497,6 @@
             outline-offset: -8px
         }
 
-        .sync-card {
-            margin-top: 18px;
-            padding: 22px;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            background: var(--panel);
-            box-shadow: var(--shadow)
-        }
-
-        .sync-card h2 {
-            margin: 0 0 14px;
-            font-size: 17px
-        }
-
-        .sync-info {
-            margin: 0 0 16px;
-            padding: 11px 14px;
-            border-radius: 10px;
-            background: var(--sky);
-            color: var(--blue);
-            font-size: 13px;
-            font-weight: 600
-        }
-
-        .sync-label {
-            margin: 0 0 8px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 700
-        }
-
-        .sync-row {
-            display: flex;
-            gap: 10px
-        }
-
-        .sync-code {
-            flex: 1;
-            min-height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            font: 600 17px/1 ui-monospace, Consolas, monospace;
-            letter-spacing: .18em;
-            color: #d6336c;
-            user-select: all
-        }
-
-        .sync-input {
-            flex: 1;
-            min-width: 0;
-            min-height: 42px;
-            padding: 0 12px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: transparent;
-            color: inherit;
-            font: 600 15px ui-monospace, Consolas, monospace;
-            letter-spacing: .12em;
-            text-align: center
-        }
-
-        .sync-or,
-        .sync-times {
-            margin: 12px 0;
-            text-align: center;
-            color: var(--muted);
-            font-size: 12px
-        }
-
-        .sync-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px
-        }
-
-        .sync-btn {
-            min-height: 42px;
-            padding: 8px 16px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: var(--bg);
-            color: inherit;
-            font-weight: 700;
-            cursor: pointer
-        }
-
-        .sync-btn.primary {
-            width: 100%;
-            border-color: var(--blue);
-            background: var(--blue);
-            color: #fff
-        }
-
-        .sync-btn.icon {
-            width: 46px;
-            padding: 0
-        }
-
-        .sync-btn.wide {
-            width: 100%
-        }
-
-        .sync-btn.danger {
-            color: #e5484d
-        }
-
-        .sync-btn:disabled {
-            opacity: .55;
-            cursor: not-allowed
-        }
-
         @media(max-width:850px) {
             .layout {
                 grid-template-columns: 1fr
@@ -655,7 +539,6 @@
             </div>
                 <div class="actions">
                     <button class="btn ghost" id="addEntryBtn" type="button">Add entry</button>
-                    <button class="btn ghost" id="resetBtn">Reset sample</button>
                     <details class="file-menu" id="fileMenu">
                         <summary class="btn primary">Excel ▾</summary>
                         <div class="file-menu-panel">
@@ -663,7 +546,15 @@
                             <button class="file-menu-item" id="exportBtn" type="button">Export Excel</button>
                         </div>
                     </details>
+                    <details class="file-menu" id="backupMenu">
+                        <summary class="btn ghost">Backup ▾</summary>
+                        <div class="file-menu-panel">
+                            <button class="file-menu-item" id="backupBtn" type="button">Download backup</button>
+                            <label class="file-menu-item" for="restoreInput">Restore backup</label>
+                        </div>
+                    </details>
                     <input id="fileInput" type="file" accept=".xlsx,.xls" />
+                    <input id="restoreInput" type="file" accept=".json,application/json" hidden />
                 </div>
         </div>
     </header>
@@ -705,32 +596,7 @@
         </div>
         <div id="status" class="status">Upload an Excel workbook to populate the dashboard.</div>
         <div class="foot">Excel format supported: a Summary sheet with AL, OIL and MC allocations, plus monthly sheets
-            containing Date, Type and Duration values. Leave data is saved in this browser. Use Cloud Sync below to back it up and share it across devices with a sync code.</div>
-        <section class="sync-card" aria-label="Cloud Sync">
-            <h2>☁ Cloud Sync</h2>
-            <p class="sync-info">Sync your Leave Tracker data across devices using a sync code. No account required.</p>
-            <div id="sync-no-code">
-                <button id="sync-generate-btn" class="sync-btn primary" type="button">Generate Sync Code</button>
-                <p class="sync-or">or enter a code from another device</p>
-                <div class="sync-row">
-                    <input id="sync-code-input" class="sync-input" type="text" placeholder="xxxxx-xxxxx" maxlength="11" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Sync code">
-                    <button id="sync-connect-btn" class="sync-btn" type="button">Connect</button>
-                </div>
-            </div>
-            <div id="sync-has-code" style="display:none">
-                <p class="sync-label">Your sync code</p>
-                <div class="sync-row">
-                    <div id="sync-code-display" class="sync-code"></div>
-                    <button id="sync-copy-btn" class="sync-btn icon" type="button" aria-label="Copy sync code" title="Copy sync code">⧉</button>
-                </div>
-                <p id="sync-last-synced" class="sync-times"></p>
-                <div class="sync-grid">
-                    <button id="sync-push-btn" class="sync-btn" type="button">Push to Cloud</button>
-                    <button id="sync-pull-btn" class="sync-btn" type="button">Pull from Cloud</button>
-                </div>
-                <button id="sync-disconnect-btn" class="sync-btn wide danger" type="button">Disconnect</button>
-            </div>
-        </section>
+            containing Date, Type and Duration values. Leave data is saved in this browser.</div>
     </div>
     <dialog class="entry-dialog" id="entryDialog" aria-labelledby="entryDialogTitle">
         <form class="entry-form" id="entryForm">
@@ -812,6 +678,10 @@
         const entryForm = document.getElementById('entryForm');
         const entryDate = document.getElementById('entryDate');
         const fileMenu = document.getElementById('fileMenu');
+        const backupMenu = document.getElementById('backupMenu');
+        [fileMenu, backupMenu].forEach(m => m.addEventListener('toggle', () => {
+            if (m.open) [fileMenu, backupMenu].forEach(o => { if (o !== m) o.open = false });
+        }));
         addEntryBtn.addEventListener('click', () => {
             entryForm.reset();
             entryDate.value = localISO(new Date());
@@ -868,8 +738,28 @@
             }
             fileMenu.open = false;
         });
+        document.getElementById('backupBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'leave-tracker-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click(); URL.revokeObjectURL(a.href);
+            fileMenu.open = false;
+        });
+        document.getElementById('restoreInput').addEventListener('change', async e => {
+            const f = e.target.files[0]; if (!f) return;
+            try {
+                const value = JSON.parse(await f.text());
+                if (!value || !value.alloc || !Array.isArray(value.events)) throw new Error('not a Leave Tracker backup file.');
+                state = value; save();
+                const first = state.events[0];
+                if (first) { const d = new Date(first.date + 'T00:00:00'); viewDate = new Date(d.getFullYear(), d.getMonth(), 1) }
+                status.className = 'status'; status.textContent = `Restored from ${f.name}: ${state.events.length} dated entries.`;
+                render();
+            } catch (err) { status.className = 'status warn'; status.textContent = 'Could not restore backup: ' + err.message }
+            finally { e.target.value = ''; fileMenu.open = false }
+        });
         fileInput.addEventListener('change', async e => { let f = e.target.files[0]; if (!f) return; try { let wb = XLSX.read(await f.arrayBuffer(), { cellDates: true }); state = parseWorkbook(wb, f.name); save(); let first = state.events[0]; if (first) { let d = new Date(first.date + 'T00:00:00'); viewDate = new Date(d.getFullYear(), d.getMonth(), 1) } status.className = 'status'; status.textContent = `Updated from ${f.name}: ${state.events.length} dated entries found.`; render() } catch (err) { status.className = 'status warn'; status.textContent = 'Could not read the workbook: ' + err.message } finally { e.target.value = ''; fileMenu.open = false } });
-        resetBtn.onclick = () => { state = structuredClone(SAMPLE); save(); viewDate = new Date(2026, 7, 1); status.className = 'status'; status.textContent = 'Sample data restored.'; render() };
         leaveFilter.addEventListener('change', e => { selectedFilter = e.target.value; renderList() });
         prev.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); renderCalendar() }; next.onclick = () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); renderCalendar() };
         for (const ev of ['dragenter', 'dragover']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.add('drop') }); for (const ev of ['dragleave', 'drop']) app.addEventListener(ev, e => { e.preventDefault(); app.classList.remove('drop') }); app.addEventListener('drop', e => { let f = e.dataTransfer.files[0]; if (f) { let dt = new DataTransfer(); dt.items.add(f); fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change')) } });
@@ -882,7 +772,6 @@
                 render();
             }
         });
-        AppSync.initUI('leave-tracking', { afterPull: () => location.reload() });
     </script>
 </body>
 
