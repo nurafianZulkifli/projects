@@ -471,7 +471,7 @@
         const KEY = 'arrearsTrackingDataV2', NKEY = 'nfcOverviewDataV2', TAB_KEY = 'arrearsTrackingActiveTab';
         let data = JSON.parse(localStorage.getItem(KEY) || '{"activeId":null,"batches":[]}');
         let nfcData = JSON.parse(localStorage.getItem(NKEY) || '{"batches":[]}');
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const save = () => localStorage.setItem(KEY, JSON.stringify(data)); const batch = () => data.batches.find(x => x.id === data.activeId) || data.batches[0];
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const save = () => { localStorage.setItem(KEY, JSON.stringify(data)) }; const batch = () => data.batches.find(x => x.id === data.activeId) || data.batches[0];
         function show(v) { if (v !== 'nfc' && v !== 'arrears') v = 'arrears'; localStorage.setItem(TAB_KEY, v); arrears.hidden = v !== 'arrears'; nfc.hidden = v !== 'nfc'; arrearsFileActions.hidden = v !== 'arrears'; nfcFileActions.hidden = v !== 'nfc'; addContextAction.hidden = v === 'nfc'; addContextAction.textContent = '+ Add record'; addContextAction.onclick = recordDlg; tabA.classList.toggle('active', v === 'arrears'); tabN.classList.toggle('active', v === 'nfc'); if (v === 'nfc') renderNFC() }
         function render() { let b = batch(); batchnav.innerHTML = data.batches.map(x => `<button class="batchbtn ${x === b ? 'active' : ''}" onclick="data.activeId='${x.id}';save();render()">${esc(x.name)} (${x.records.length})</button>`).join(''); if (!b) { arrearsBody.innerHTML = '<div class="empty"><h2>No data loaded</h2><p>Import a CSV file to begin.</p></div>'; return } let paid = b.records.filter(x => x.paid).length; arrearsBody.innerHTML = `<div class="head"><div><h2>${esc(b.name)}</h2><a class="source" href="${esc(b.sourceUrl)}" target="_blank">${esc(b.sourceLabel)}</a></div></div><div class="summary">Total: ${b.records.length} | Paid: ${paid} | Outstanding: ${b.records.length - paid}</div><div class="tablewrap"><table><thead><tr><th>Exchange ID</th><th>Name</th><th>Remarks</th><th>Arrears Paid</th><th>Actions</th></tr></thead><tbody>${b.records.map((r, i) => `<tr><td>${esc(r.exchangeId)}</td><td>${esc(r.name)}</td><td class="${r.paid ? 'paid' : ''}">${esc(r.remarks)}</td><td><label><input type="checkbox" ${r.paid ? 'checked' : ''} onchange="togglePaid(${i},this.checked)"> ${r.paid ? 'Paid' : 'Outstanding'}</label></td><td><button onclick="recordDlg(${i})">Edit</button> <button onclick="del(${i})">Delete</button></td></tr>`).join('')}</tbody></table></div>` }
         function togglePaid(i, v) { batch().records[i].paid = v; save(); render() } function del(i) { if (confirm('Delete this record?')) { batch().records.splice(i, 1); save(); render() } } function recordDlg(i = '') { if (!batch()) return alert('Import CSV data first.'); editIdx.value = i; if (i !== '') { let r = batch().records[i]; eid.value = r.exchangeId; nm.value = r.name; rem.value = r.remarks } else { eid.value = nm.value = rem.value = '' } recordModal.classList.add('open') } function closeM() { recordModal.classList.remove('open') } function saveRecord() { let i = editIdx.value, r = { exchangeId: eid.value.trim(), name: nm.value.trim(), remarks: rem.value.trim(), paid: i === '' ? false : batch().records[+i].paid }; if (i === '') batch().records.push(r); else batch().records[+i] = r; save(); closeM(); render() }
@@ -630,18 +630,18 @@
             overall.textContent = `Overall: ${done} of ${total} completed`;
         }
         stamp.textContent = new Intl.DateTimeFormat('en-SG', { dateStyle: 'full', timeStyle: 'short' }).format(new Date); render(); show(localStorage.getItem(TAB_KEY));
-        syncRepoFile({
+        const repoSyncs = [syncRepoFile({
             url: '../data/arrears.csv', key: KEY, apply: text => {
                 const next = arrearsFromCSV(text); if (!next.batches.length) return false;
-                data = next; save(); render();
+                data = next; localStorage.setItem(KEY, JSON.stringify(data)); render();
             }
-        });
-        syncRepoFile({
+        }), syncRepoFile({
             url: '../data/nfc.csv', key: NKEY, apply: text => {
                 const batches = nfcFromCSV(text);
-                nfcData = { batches }; nfcEditMode.clear(); saveNfc(); renderNFC();
+                nfcData = { batches }; nfcEditMode.clear(); localStorage.setItem(NKEY, JSON.stringify(nfcData)); renderNFC();
             }
-        });
+        })];
+        Promise.all(repoSyncs);
     </script>
 </body>
 
