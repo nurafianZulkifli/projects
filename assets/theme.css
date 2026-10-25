@@ -59,8 +59,16 @@
 :root[data-theme="dark"] .match,
 :root[data-theme="dark"] .pill,
 :root[data-theme="dark"] table {
-    background: #eaf2ff;
-    color: #1859c9;
+    background: #334457;
+    color: #fefefe;
+}
+
+:root[data-theme="dark"] .pill {
+    background: #1e2938;
+}
+
+:root[data-theme="dark"] .pill strong {
+    color: #8cc4ff;
 }
 
 :root[data-theme="dark"] th {

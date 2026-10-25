@@ -1,23 +1,766 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Company & Occupation Finder</title>
-<style>
-:root{--red:#e31b23;--ink:#202124;--muted:#667085;--line:#e5e7eb;--bg:#f7f8fa;--card:#fff;--blue:#2563eb}*{box-sizing:border-box}body{margin:0;font:14px/1.5 Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg)}header{background:#fff;border-bottom:1px solid var(--line)}.brand{max-width:1180px;margin:auto;padding:18px 22px;font-weight:750;font-size:17px}.brand b{color:var(--red)}nav{max-width:1180px;margin:auto;padding:0 22px;display:flex;gap:24px;overflow:auto}.tab{border:0;background:none;padding:13px 2px;white-space:nowrap;color:#667085;cursor:pointer;border-bottom:3px solid transparent}.tab.active{color:var(--red);font-weight:700;border-bottom-color:var(--red)}main{max-width:1180px;margin:auto;padding:0 22px 48px}.hero{min-height:430px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.hero h1{font-size:44px;margin:0 0 8px}.hero p{margin:0 0 26px;color:var(--muted);font-size:16px}.search{position:relative;width:min(720px,100%)}.search input{width:100%;padding:17px 52px 17px 50px;border:1px solid #dcdfe4;border-radius:28px;font-size:16px;background:white;box-shadow:0 2px 8px #00000016;outline:none}.search input:focus{box-shadow:0 3px 14px #00000022;border-color:#c5c9d0}.mag{position:absolute;left:19px;top:17px;color:#8a9099;font-size:18px}.clear{position:absolute;right:17px;top:14px;border:0;background:none;font-size:22px;color:#8a9099;cursor:pointer}.hint{color:#98a2b3;margin-top:14px}.results{width:min(900px,100%);margin-top:24px;text-align:left;display:grid;gap:10px}.result{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 17px;box-shadow:0 1px 3px #0000000b}.result h3{margin:0 0 7px;font-size:16px}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{background:#f2f4f7;padding:4px 8px;border-radius:7px;color:#475467;font-size:12px}.union{background:#fff0f0;color:#b42318;font-weight:700}.view{display:none;padding-top:34px}.view.active{display:block}.title{font-size:28px;margin:0}.sub{color:var(--muted);margin:5px 0 18px}.filter{padding:11px 14px;border:1px solid var(--line);border-radius:10px;width:min(420px,100%);margin-bottom:16px}.tablewrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:#fafafa;color:#667085;position:sticky;top:0}tr:last-child td{border-bottom:0}.note{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px;margin-top:20px}.empty{color:var(--muted);text-align:center;padding:24px}@media(max-width:600px){.hero{min-height:360px}.hero h1{font-size:32px}}
-</style></head><body><header><div class="brand"><b>MSD</b> • Company & Occupation Finder</div><nav><button class="tab active" data-view="home">Search</button><button class="tab" data-view="specific">Specific Companies</button><button class="tab" data-view="general">General Occupations</button><button class="tab" data-view="freelancer">Freelancers</button></nav></header><main>
-<section id="home" class="view active hero"><h1>What are you looking for?</h1><p>Search by company, occupation, company code, union or employment type.</p><div class="search"><span class="mag">⌕</span><input id="mainSearch" autocomplete="off" placeholder="Search company, occupation, code or union…"><button class="clear" id="clear" aria-label="Clear">×</button></div><div class="hint">Examples: IMDA, 122712, AUPE, tutor, private hire driver</div><div id="results" class="results"></div></section>
-<section id="specific" class="view"><h2 class="title">Specific Company List</h2><p class="sub">Indicated names mapped to company, company code and union.</p><input class="filter" data-table="specificTable" placeholder="Filter this list…"><div class="tablewrap"><table id="specificTable"><thead><tr><th>Indicated company name</th><th>Company name</th><th>Company code</th><th>Union</th></tr></thead><tbody></tbody></table></div></section>
-<section id="general" class="view"><h2 class="title">General Occupation List</h2><p class="sub">Occupation-based company and union guidance.</p><input class="filter" data-table="generalTable" placeholder="Filter this list…"><div class="tablewrap"><table id="generalTable"><thead><tr><th>Occupation name</th><th>Company name</th><th>Union</th></tr></thead><tbody></tbody></table></div><div class="note"><b>Additional guidance:</b> If company was never declared: Company = FSEU, Union = FSEU. If there is a company, allocate under the company's union. Odd jobs with a company: check campaign code, upfront payment and campaign bond period. Without a company, treat as freelance &gt; GB/FSEU and conduct the same checks.</div></section>
-<section id="freelancer" class="view"><h2 class="title">Freelancer List</h2><p class="sub">Occupation group, union, company code and employment type.</p><input class="filter" data-table="freelancerTable" placeholder="Filter this list…"><div class="tablewrap"><table id="freelancerTable"><thead><tr><th>Occupation Group</th><th>Union</th><th>Company code</th><th>Employment type</th></tr></thead><tbody></tbody></table></div></section>
-</main><script>
-const specific=[
-['INSTITUTE OF MICROELECTRONICS','MINISTRY OF TRADE & INDUSTRIES','122712','AUPE'],['SINGAPORE LABOUR FOUNDATION (SLF)','NTUC ARU','124501','SUN'],['WORKFORCE SINGAPORE','MINISTRY OF MANPOWER','122710','AUPE'],['URA','SINGAPORE URBAN REDEVELOPMENT AUTHORITY','131075','SURAWU'],['MTI','MINISTRY OF TRADE & INDUSTRIES','122712','AUPE'],['SINGAPORE SCIENCE CENTRE STAFF','','','AUPE'],['HOME TEAM BEHAVIOURAL SCIENCE CENTRE (HTBSC)','MINISTRY OF HOME AFFAIRS','122706','AUPE'],['CIVIL SERVICE COLLEGE',"PRIME MINISTER'S OFFICE",'126900','AUPE'],['AGENCY FOR SCIENCE, TECHNOLOGY AND RESEARCH (A*STAR)','MINISTRY OF TRADE & INDUSTRIES','122712','AUPE'],['ATTORNEY-GENERAL CHAMBERS & AUDITOR - GENERAL OFFICE','CIVIL SERVICE','183760','AUPE'],['SKILLSFUTURE SINGAPORE','MINISTRY OF EDUCATION','122701','AUPE'],['FAMILY COURT / SUPREME COURT','CIVIL SERVICE','183760','AUPE'],['ACTIVESG','MINISTRY OF CULTURE, COMMUNITY & YOUTH','233383','AUPE'],['ENTERPRISE SINGAPORE','PRODUCTIVITY & STANDARD BOARD','127011','ESSU'],['MAJLIS UGAMA ISLAM SINGAPORE (MUIS)','MINISTRY OF CULTURE, COMMUNITY & YOUTH','233383','AUPE'],['EMPLOYMENT & EMPLOYABILITY INSTITUTE (E2I)','NTUC ARU','124501','SUN'],['SINGHEALTH HQ','SINGAPORE HEALTH SERVICES PTE LTD','150894','HSEU'],['HOME TEAM SCIENCE & TECHNOLOGY AGENCY','MINISTRY OF HOME AFFAIRS','122706','AUPE'],['MCST','THE MANAGEMENT CORP. STRATA TITLE','134705','SISEU'],['COMMUNITY CENTRE/CLUB',"PEOPLE'S ASSOCIATION",'125943','SMMWU'],['UNITY PHARMACY','NTUC FAIRPRICE CO-OPERATIVE LTD','124489',''],['INFOCOMM MEDIA DEVELOPMENT AUTHORITY (IMDA)','MINISTRY OF COMMUNICATIONS & INFOMATION','122707','AUPE'],['INFORMATION DEVELOPMENT AUTHORITY OF SINGAPORE (IDA) & MEDIA DEVELOPMENT AUTHORITY OF SINGAPORE (MDA)','GOVERNMENT TECHNOLOGY AGENCY','305612','AUSBE'],['SPORT SINGAPORE (SPORTSG)','MINISTRY OF CULTURE, COMMUNITY & YOUTH','233383','AUPE'],['MINISTRY OF SOCIAL AFFAIRS','MINISTRY OF CULTURE, COMMUNITY & YOUTH','233383','AUPE'],['CIVIL SERVICE COLLEGE',"PRIME MINISTER'S OFFICE",'126900','AUPE'],['ACCOUNTING AND CORPORATE REGULATORY AUTHORITY','ACCOUNTING AND CORPORATE REGULATORY AUTHORITY','005655','AUPE'],['COMPETITION AND CONSUMER COMMISSION OF SINGAPORE','COMPETITION AND CONSUMER COMMISSION OF SINGAPORE','005667','AUPE']];
-const general=[
-['TEACHER/EDUCATOR • GENERAL EDUCATION OFFICER/EDUCATION OFFICER (ACADEMICS)','MOE • OTHER SCHOOLS/POLYTECHNICS • ITE','STU • UITS'],['NON-TEACHER • OPERATION SUPPORT OFFICER (ADMINISTRATION/NON-ACADEMIC)','MOE • OTHER SCHOOLS/POLYTECHNICS','AUPE'],['ANY PROFESSION','NUS • NTU • OTHER IHLs • NGEE ANN POLYTECHNIC','ESU • NPASU'],['UNIFORMED','SINGAPORE ARMED FORCES (SAF) • REPUBLIC OF SINGAPORE AIRFORCE (RSAF) • REPUBLIC OF SINGAPORE NAVY (RSN) • SINGAPORE CIVIL DEFENCE FORCE • MINDEF','NTUCGB — From 1st Aug, Trf to UClub under LPD + 1 day'],['CIVILLIAN STAFF (OTHERS/ADMIN CLERK)','Refer to below',''],['HOUSEWIFE • UNEMPLOYED • RETIRED','UCLUB - HOUSEWIFE • UCLUB - UNEMPLOYED • UCLUB - RETIREES','NTUCGB — From 1st Apr, Trf to UClub under LPD + 1 day'],['BANKING','ALL OTHER BANKS (except DBS) • DBS','BFSU • DBSSU'],['HOSPITAL','ALL OTHER HOSPITALS','HSEU'],['ANY PROFESSION','ST ENGINEERING','STESU'],['MANAGER/PILOT • CREW','SIA • if not AACLUSTER - MUST BE SIA • if listed as Singapore Airlines, change to SIA','AESU • SIASU'],['TAXI','HQ • NTA','NTA'],['PHV','GRAB • ALL OTHERS','NPHVA'],['SPORTS COACHES','NICA','NICA'],['HAWKER/FRUIT STALL OWNER/STALL OWNER','LOCATION OF STALL / XXX CANTEEN (e.g. St Gabriel’s Sec School Canteen)','FDAWU']];
-const freelancer=[
-['FREELANCER/SEP - ACTOR/ACTRESS/MUSICIAN','FSEU','','Self-Employed/Freelancer'],['FREELANCER/SEP - BEAUTICIAN/MAKE UP ARTIST/ HAIRSTYLIST','FSEU','','Self-Employed/Freelancer'],['FREELANCER/SEP - COMBI BUS DRIVER','NPHVA','303672','Self-Employed/Freelancer'],['FREELANCER/SEP - CONTENT CREATOR/ WRITER/DIGITAL MEDIA/ILLUSTRATOR','VICPA','336250','Self-Employed/Freelancer'],['FREELANCER/SEP - COURIER','NDCA','338288','Self-Employed/Freelancer'],['FREELANCER/SEP - DELIVERY DRIVER — Change to FREELANCER/SEP - OTHERS','NDCA','338288','Self-Employed/Freelancer'],['FREELANCER/SEP - FOOD DELIVERY RIDER (WALKER/PAB/PMA)','NDCA','338288','Self-Employed/Freelancer'],['FREELANCER/SEP - FOOD DELIVERY (MOTORBIKE)','NDCA','338288','Self-Employed/Freelancer'],['FREELANCER/SEP - EXERCISE PROFESSIONALS','NICA','317410','Self-Employed/Freelancer'],['FREELANCER/SEP - LIFESKILLS INSTRUCTORS / ENRICHMENT TRAINERS','NICA','317410','Self-Employed/Freelancer'],['FREELANCER/SEP - LIMOUSINE DRIVER','NPHVA','303672','Self-Employed/Freelancer'],['FREELANCER/SEP - OTHERS','FSEU','','Self-Employed/Freelancer'],['FREELANCER/SEP - PHOTOGRAPHER','VICPA','336250','Self-Employed/Freelancer'],['FREELANCER/SEP - PRIVATE HIRE DRIVER','NPHVA','303672','Self-Employed/Freelancer'],['FREELANCER/SEP - PRODUCTION/PRE-PRODUCTION/ POST-PRODUCTION','VICPA','336250','Self-Employed/Freelancer'],['FREELANCER/SEP - SPORTS COACHES / OUTDOOR LEARNING INSTRUCTORS','NICA','317410','Self-Employed/Freelancer'],['FREELANCER/SEP - TAXI DRIVER','NTA','','Self-Employed/Freelancer'],['FREELANCER/SEP - TUTOR','FSEU','','Self-Employed/Freelancer'],['FREELANCER/SEP - VIDEOGRAPHER','VICPA','336250','Self-Employed/Freelancer'],['FREELANCER/SEP - VISUAL ARTS / PERFORMING ARTS INSTRUCTORS','NICA','317410','Self-Employed/Freelancer'],['FREELANCER/SEP - ADULT EDUCATORS','ESU','','Employed'],['FREELANCER/SEP - FINANCIAL & INSURANCE ADVISERS','SIEU','','Employed'],['FREELANCER/SEP - REAL ESTATE AGENTS','SISEU','','Employed'],['FREELANCER/SEP - TOURIST GUIDE','AREU','','Employed']];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function fill(id,data){document.querySelector('#'+id+' tbody').innerHTML=data.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')} fill('specificTable',specific);fill('generalTable',general);fill('freelancerTable',freelancer);
-const records=[...specific.map(r=>({type:'Specific Company',title:r[0],fields:[['Company',r[1]],['Code',r[2]],['Union',r[3]]]})),...general.map(r=>({type:'General Occupation',title:r[0],fields:[['Company',r[1]],['Union',r[2]]]})),...freelancer.map(r=>({type:'Freelancer',title:r[0],fields:[['Union',r[1]],['Code',r[2]],['Employment',r[3]]]}))];
-function search(){const q=document.querySelector('#mainSearch').value.trim().toLowerCase(), out=document.querySelector('#results');if(!q){out.innerHTML='';return}const hits=records.filter(x=>(x.title+' '+x.type+' '+x.fields.flat().join(' ')).toLowerCase().includes(q)).slice(0,25);out.innerHTML=hits.length?hits.map(x=>`<article class="result"><h3>${esc(x.title)}</h3><div class="chips"><span class="chip">${esc(x.type)}</span>${x.fields.filter(f=>f[1]).map(f=>`<span class="chip ${f[0]=='Union'?'union':''}"><b>${esc(f[0])}:</b> ${esc(f[1])}</span>`).join('')}</div></article>`).join(''):'<div class="empty">No matching records found.</div>'}
-document.querySelector('#mainSearch').addEventListener('input',search);document.querySelector('#clear').onclick=()=>{document.querySelector('#mainSearch').value='';search();document.querySelector('#mainSearch').focus()};
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.view).classList.add('active')});
-document.querySelectorAll('.filter').forEach(f=>f.addEventListener('input',()=>{let q=f.value.toLowerCase();document.querySelectorAll('#'+f.dataset.table+' tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(q)?'':'none')}));
-</script></body></html>
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="../assets/img/core-img/logo.png" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="../assets/theme.js"></script>
+    <title>Company & Occupation Finder</title>
+    <style>
+        :root {
+            --navy: #102a43;
+            --blue: #1677ff;
+            --ink: #243b53;
+            --muted: #6b7c93;
+            --line: #d9e2ec;
+            --bg: #f6f8fb;
+            --card: #fff;
+            --shadow: 0 10px 30px rgba(16, 42, 67, .08)
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            color: var(--ink);
+            background: var(--bg)
+        }
+
+        .top {
+            background: linear-gradient(120deg, #102a43, #174d7c);
+            color: white;
+            padding: 28px 24px 72px
+        }
+
+        .top-inner,
+        .wrap {
+            max-width: 1240px;
+            margin: auto
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
+            background: #fff;
+            color: #174d7c;
+            display: grid;
+            place-items: center;
+            font-weight: 900
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            margin: 0
+        }
+
+        .brand p {
+            margin: 3px 0 0;
+            color: #cfe4f8;
+            font-size: 13px
+        }
+
+        .wrap {
+            margin-top: -48px;
+            padding: 0 20px 40px
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 8px;
+            margin-bottom: 16px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: var(--shadow)
+        }
+
+        .tab {
+            border: 0;
+            background: transparent;
+            padding: 10px 16px;
+            border-radius: 9px;
+            white-space: nowrap;
+            color: var(--muted);
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .tab.active {
+            color: var(--blue);
+            background: #eaf3ff
+        }
+
+        .view {
+            display: none;
+            padding: 22px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: var(--shadow)
+        }
+
+        .view.active {
+            display: block
+        }
+
+        .hero h1 {
+            font-size: clamp(26px, 4vw, 34px);
+            margin: 0 0 6px;
+            color: var(--navy)
+        }
+
+        .hero p {
+            margin: 0 0 22px;
+            color: var(--muted);
+            font-size: 15px
+        }
+
+        .search {
+            position: relative;
+            width: min(760px, 100%)
+        }
+
+        .search input {
+            width: 100%;
+            height: 48px;
+            padding: 0 46px 0 42px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none
+        }
+
+        .search input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(22, 119, 255, .12)
+        }
+
+        .mag {
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            color: var(--muted);
+            font-size: 20px
+        }
+
+        .clear {
+            position: absolute;
+            right: 9px;
+            top: 9px;
+            border: 0;
+            background: #edf2f7;
+            border-radius: 8px;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            color: #52667a;
+            cursor: pointer
+        }
+
+        .hint {
+            color: var(--muted);
+            margin-top: 12px;
+            font-size: 13px
+        }
+
+        .results {
+            width: 100%;
+            margin-top: 18px;
+            display: grid;
+            gap: 10px
+        }
+
+        .result {
+            min-width: 0;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-left: 5px solid var(--blue);
+            border-radius: 12px;
+            background: #eaf3ff
+        }
+
+        .result-type {
+            margin-bottom: 2px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase
+        }
+
+        .result h3 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 23px;
+            line-height: 1.25;
+            overflow-wrap: anywhere
+        }
+
+        .result-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+            gap: 10px;
+            margin-top: 12px
+        }
+
+        .result-field {
+            min-width: 0;
+            padding: 10px 11px;
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            background: var(--card)
+        }
+
+        .result-field span {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase
+        }
+
+        .result-field strong {
+            display: block;
+            color: var(--blue);
+            font-size: 15px;
+            line-height: 1.4;
+            overflow-wrap: anywhere
+        }
+
+        .title {
+            font-size: 22px;
+            margin: 0;
+            color: var(--navy)
+        }
+
+        .sub {
+            color: var(--muted);
+            margin: 5px 0 18px;
+            font-size: 13px
+        }
+
+        .filter {
+            height: 42px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            width: min(440px, 100%);
+            margin-bottom: 16px
+        }
+
+        .tablewrap {
+            overflow: auto;
+            max-height: 65vh;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+            color: var(--ink)
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+            font-size: 13px
+        }
+
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            background: #edf3f8;
+            color: #52667a;
+            position: sticky;
+            top: 0;
+            z-index: 1
+        }
+
+        tr:last-child td {
+            border-bottom: 0
+        }
+
+        .note {
+            background: #eef6ff;
+            border: 1px solid #cfe4f8;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 16px;
+            color: #174d7c
+        }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 24px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px
+        }
+
+        .source-status {
+            margin-bottom: 16px;
+            padding: 11px 14px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .source-status.error {
+            color: #b42318;
+            background: #fff0ee;
+            border-color: #f1b6af
+        }
+
+        #guidanceContent {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+            gap: 16px
+        }
+
+        .guidance-group {
+            padding: 18px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(16, 42, 67, .06)
+        }
+
+        .guidance-group h3 {
+            margin: 0 0 14px;
+            color: var(--navy);
+            font-size: 17px
+        }
+
+        .guidance-list {
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 9px;
+            list-style: none
+        }
+
+        .guidance-list li {
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--bg);
+            line-height: 1.55
+        }
+
+        .guidance-block {
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--bg)
+        }
+
+        .guidance-block h4 {
+            margin: 0 0 9px;
+            color: var(--navy);
+            font-size: 14px
+        }
+
+        .guidance-block .guidance-list li {
+            background: var(--card)
+        }
+
+        :root[data-theme="dark"] .tab.active {
+            color: #d9ebff;
+            background: #243a52
+        }
+
+        :root[data-theme="dark"] .tablewrap table {
+            background: var(--card);
+            color: var(--ink)
+        }
+
+        :root[data-theme="dark"] .result {
+            background: #243a52;
+            border-color: var(--line);
+            border-left-color: var(--blue)
+        }
+
+        :root[data-theme="dark"] .result-field {
+            background: #1e2938;
+            border-color: var(--line)
+        }
+
+        :root[data-theme="dark"] .result-field strong {
+            color: #90c9ff
+        }
+
+        :root[data-theme="dark"] .note {
+            color: #d4e8ff;
+            background: #243a52;
+            border-color: var(--line)
+        }
+
+        :root[data-theme="dark"] .guidance-group {
+            background: var(--card);
+            border-color: var(--line);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .18)
+        }
+
+        :root[data-theme="dark"] .guidance-list li {
+            background: #243a52;
+            border-color: var(--line)
+        }
+
+        :root[data-theme="dark"] .guidance-block {
+            background: #1a2635;
+            border-color: var(--line)
+        }
+
+        :root[data-theme="dark"] .guidance-block .guidance-list li {
+            background: #243a52
+        }
+
+        :root[data-theme="dark"] .source-status.error {
+            color: #ffd4d0;
+            background: #4b292c;
+            border-color: #744044
+        }
+
+        @media(max-width:800px) {
+            .top {
+                padding: 24px 20px 64px
+            }
+
+            .wrap {
+                padding: 0 14px 32px
+            }
+
+            .view {
+                padding: 18px
+            }
+        }
+
+        @media(max-width:520px) {
+            .top {
+                padding: 22px 16px 62px
+            }
+
+            .brand h1 {
+                font-size: 20px
+            }
+
+            .tabs {
+                gap: 2px;
+                padding: 6px
+            }
+
+            .tab {
+                padding: 9px 11px;
+                font-size: 13px
+            }
+
+            .view {
+                padding: 16px
+            }
+
+            .tablewrap {
+                max-height: 60vh
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="top">
+        <div class="top-inner">
+            <div class="brand">
+                <div class="logo">MSD</div>
+                <div>
+                    <h1>Company &amp; Occupation Finder</h1>
+                    <p>Find company, occupation and employment guidance</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main class="wrap">
+        <div class="source-status" id="sourceStatus" role="status" aria-live="polite" hidden></div>
+        <nav class="tabs" aria-label="Finder sections">
+            <button class="tab active" data-view="home">Search</button><button class="tab"
+                data-view="general">General Occupations</button><button class="tab" data-view="freelancer">Freelancers</button><button class="tab"
+                data-view="guidance">Guidance</button>
+        </nav>
+        <section id="home" class="view active hero">
+            <h1>What are you looking for?</h1>
+            <p>Search by company, occupation, company code, union or employment type.</p>
+            <div class="search"><span class="mag">⌕</span><input id="mainSearch" autocomplete="off"
+                    placeholder="Search occupation, company, code or union…" disabled><button class="clear" id="clear"
+                    aria-label="Clear">×</button></div>
+            <div class="hint">Search the workbook’s occupation, company, union and guidance entries.</div>
+            <div id="results" class="results"></div>
+        </section>
+        <section id="general" class="view">
+            <h2 class="title">General Occupation List</h2>
+            <p class="sub">Occupation-to-company and union mappings from the General sheet.</p><input class="filter"
+                data-target="generalCards" placeholder="Filter this list…">
+            <div class="results" id="generalCards"><div class="empty">Loading workbook data…</div></div>
+        </section>
+        <section id="freelancer" class="view">
+            <h2 class="title">Freelancer List</h2>
+            <p class="sub">Occupation group, union, company code and employment type from the FSEU sheet.</p><input class="filter"
+                data-target="freelancerCards" placeholder="Filter this list…">
+            <div class="results" id="freelancerCards"><div class="empty">Loading workbook data…</div></div>
+        </section>
+        <section id="guidance" class="view">
+            <h2 class="title">Additional Guidance</h2>
+            <p class="sub">Notes and instructions from the General, FSEU and Other Details sheets.</p>
+            <div id="guidanceContent"><div class="empty">Loading workbook guidance…</div></div>
+        </section>
+    </main>
+    <script>
+        const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const clean = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+        let records = [];
+
+        function rowsFor(sheet) {
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+            for (const merge of sheet['!merges'] || []) {
+                const value = rows[merge.s.r]?.[merge.s.c] ?? '';
+                for (let row = merge.s.r; row <= merge.e.r; row++) {
+                    rows[row] ||= [];
+                    for (let column = merge.s.c; column <= merge.e.c; column++) {
+                        if (row === merge.s.r && column === merge.s.c) continue;
+                        rows[row][column] = value;
+                    }
+                }
+            }
+            return rows;
+        }
+
+        function findHeader(rows, expected) {
+            const index = rows.findIndex(row => expected.every(header =>
+                row.some(cell => clean(cell).toLowerCase() === header)
+            ));
+            if (index < 0) throw new Error(`Could not find the ${expected.join(', ')} columns.`);
+            return { index, cells: rows[index].map(cell => clean(cell).toLowerCase()) };
+        }
+
+        function renderResultCard(record) {
+            return `<article class="result"><div class="result-type">${esc(record.type)}</div><h3>${esc(record.title)}</h3><div class="result-fields">${record.fields.filter(field => field[1]).map(field => `<div class="result-field"><span>${esc(field[0])}</span><strong>${esc(field[1])}</strong></div>`).join('')}</div></article>`;
+        }
+
+        function renderRecordList(id, data) {
+            document.getElementById(id).innerHTML = data.length
+                ? data.map(renderResultCard).join('')
+                : '<div class="empty">No entries found in the workbook.</div>';
+        }
+
+        function workbookNotes(sheet, title, isTableRow) {
+            return rowsFor(sheet).flatMap(row => {
+                if (isTableRow(row)) return [];
+                const lines = row.flatMap(cell => String(cell ?? '').split(/\r?\n/).map(clean)).filter(Boolean);
+                if (!lines.length) return [];
+                if (title === 'FSEU' && lines[0].startsWith('-')) return [{ title, text: lines[0] }];
+                return lines.map(text => ({ title, text }));
+            });
+        }
+
+        function groupGuidanceNotes(notes) {
+            const blocks = [];
+            let currentBlock = null;
+            for (const note of notes) {
+                const isHeading = /^(?:For .+|Odd Jobs|If never declare Company):$/i.test(note.text);
+                const startsNewGuidance = /^If there's company\b/i.test(note.text);
+                if (isHeading) {
+                    currentBlock = { heading: note.text.replace(/:$/, ''), items: [] };
+                    blocks.push(currentBlock);
+                } else if (startsNewGuidance) {
+                    currentBlock = null;
+                    blocks.push({ text: note.text });
+                } else if (/^Use this for IAFA\b/i.test(note.text)) {
+                    currentBlock = null;
+                    blocks.push({ text: note.text });
+                } else if (currentBlock) {
+                    currentBlock.items.push(note.text);
+                } else {
+                    blocks.push({ text: note.text });
+                }
+            }
+            return blocks;
+        }
+
+        function loadWorkbook(workbook) {
+            const generalSheet = workbook.Sheets.General;
+            const freelancerSheet = workbook.Sheets.FSEU;
+            const otherDetailsSheet = workbook.Sheets['Other Details'];
+            if (!generalSheet || !freelancerSheet || !otherDetailsSheet) {
+                throw new Error('Database.xlsx must contain the General, FSEU, and Other Details sheets.');
+            }
+
+            const generalRows = rowsFor(generalSheet);
+            const generalHeader = findHeader(generalRows, ['occupation name', 'company name', 'union']);
+            const generalIndexes = {
+                occupation: generalHeader.cells.indexOf('occupation name'),
+                company: generalHeader.cells.indexOf('company name'),
+                union: generalHeader.cells.indexOf('union')
+            };
+            const general = generalRows.slice(generalHeader.index + 1).flatMap(row => {
+                const entry = [
+                    clean(row[generalIndexes.occupation]),
+                    clean(row[generalIndexes.company]),
+                    clean(row[generalIndexes.union])
+                ];
+                return entry[0] && (entry[1] || entry[2]) ? [entry] : [];
+            });
+
+            const freelancerRows = rowsFor(freelancerSheet);
+            const freelancerHeader = findHeader(freelancerRows, [
+                'occupation group (name)', 'union', 'company code', 'employment type'
+            ]);
+            const freelancerIndexes = {
+                occupation: freelancerHeader.cells.indexOf('occupation group (name)'),
+                union: freelancerHeader.cells.indexOf('union'),
+                code: freelancerHeader.cells.indexOf('company code'),
+                employment: freelancerHeader.cells.indexOf('employment type')
+            };
+            const freelancer = freelancerRows.slice(freelancerHeader.index + 1).flatMap(row => {
+                const entry = [
+                    clean(row[freelancerIndexes.occupation]),
+                    clean(row[freelancerIndexes.union]),
+                    clean(row[freelancerIndexes.code]),
+                    clean(row[freelancerIndexes.employment])
+                ];
+                return entry[0] && !entry[0].startsWith('-') && entry.slice(1).some(Boolean) ? [entry] : [];
+            });
+
+            const generalNotes = workbookNotes(generalSheet, 'General', row =>
+                row[generalIndexes.occupation] && (row[generalIndexes.company] || row[generalIndexes.union])
+            );
+            const freelancerNotes = workbookNotes(freelancerSheet, 'FSEU', row =>
+                row[freelancerIndexes.occupation]
+                && !clean(row[freelancerIndexes.occupation]).startsWith('-')
+                && row.slice(1).some(cell => clean(cell))
+            ).filter(note => ![
+                'Freelancer Lists',
+                'Occupation Group (Name)',
+                'Union',
+                'COMPANY CODE',
+                'Employment Type'
+            ].includes(note.text));
+            const otherNotes = rowsFor(otherDetailsSheet).flatMap(row => {
+                return row.flatMap(cell => String(cell ?? '').split(/\r?\n/).map(clean))
+                    .filter(text => text && text !== 'Other Infos')
+                    .map(text => ({ title: 'Other Details', text }));
+            });
+            const guidance = [...generalNotes, ...freelancerNotes, ...otherNotes];
+
+            const generalRecords = general.map(row => ({
+                type: 'General Occupation',
+                title: row[0],
+                fields: [['Union', row[2]], ['Company', row[1]]]
+            }));
+            const freelancerRecords = freelancer.map(row => ({
+                type: 'Freelancer',
+                title: row[0],
+                fields: [['Union', row[1]], ['Company code', row[2]], ['Employment type', row[3]]]
+            }));
+            renderRecordList('generalCards', generalRecords);
+            renderRecordList('freelancerCards', freelancerRecords);
+            const groupedGuidance = guidance.reduce((groups, note) => {
+                (groups[note.title] ||= []).push(note);
+                return groups;
+            }, {});
+            document.querySelector('#guidanceContent').innerHTML = Object.entries(groupedGuidance)
+                .map(([title, notes]) => {
+                    const blocks = groupGuidanceNotes(notes);
+                    const content = blocks.map(block => block.heading
+                        ? `<li class="guidance-block"><h4>${esc(block.heading)}</h4><ul class="guidance-list">${block.items.map(item => `<li>${esc(item)}</li>`).join('')}</ul></li>`
+                        : `<li>${esc(block.text)}</li>`
+                    ).join('');
+                    return `<section class="guidance-group"><h3>${esc(title)}</h3><ul class="guidance-list">${content}</ul></section>`;
+                })
+                .join('');
+
+            records = [
+                ...general.map(row => ({ type: 'General Occupation', title: row[0], fields: [['Union', row[2]], ['Company', row[1]]] })),
+                ...freelancer.map(row => ({ type: 'Freelancer', title: row[0], fields: [['Union', row[1]], ['Company code', row[2]], ['Employment type', row[3]]] })),
+                ...guidance.map(note => ({ type: `${note.title} Guidance`, title: note.text, fields: [['Category', note.title]] }))
+            ];
+            document.querySelector('#mainSearch').disabled = false;
+        }
+
+        function search() {
+            const query = document.querySelector('#mainSearch').value.trim().toLowerCase();
+            const output = document.querySelector('#results');
+            if (!query) {
+                output.innerHTML = '';
+                return;
+            }
+            const hits = records.filter(record =>
+                `${record.title} ${record.type} ${record.fields.flat().join(' ')}`.toLowerCase().includes(query)
+            ).slice(0, 25);
+            output.innerHTML = hits.length
+                ? hits.map(renderResultCard).join('')
+                : '<div class="empty">No matching records found.</div>';
+        }
+
+        document.querySelector('#mainSearch').addEventListener('input', search);
+        document.querySelector('#clear').onclick = () => {
+            const input = document.querySelector('#mainSearch');
+            input.value = '';
+            search();
+            input.focus();
+        };
+        document.querySelectorAll('.tab').forEach(button => button.onclick = () => {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            button.classList.add('active');
+            document.getElementById(button.dataset.view).classList.add('active');
+        });
+        document.querySelectorAll('.filter').forEach(filter => filter.addEventListener('input', () => {
+            const query = filter.value.toLowerCase();
+            document.querySelectorAll(`#${filter.dataset.target} .result`).forEach(card => {
+                card.style.display = card.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }));
+
+        async function initialize() {
+            const status = document.querySelector('#sourceStatus');
+            try {
+                if (!window.XLSX) throw new Error('The spreadsheet reader could not be loaded.');
+                const response = await fetch('Database.xlsx', { cache: 'no-cache' });
+                if (!response.ok) throw new Error(`Database.xlsx could not be loaded (HTTP ${response.status}).`);
+                loadWorkbook(XLSX.read(await response.arrayBuffer(), { type: 'array' }));
+            } catch (error) {
+                status.classList.add('error');
+                status.textContent = `Unable to load occupation data: ${error.message}`;
+                status.hidden = false;
+                document.querySelector('#generalCards').innerHTML = '<div class="empty">Workbook data is unavailable.</div>';
+                document.querySelector('#freelancerCards').innerHTML = '<div class="empty">Workbook data is unavailable.</div>';
+                document.querySelector('#guidanceContent').innerHTML = '<div class="empty">Workbook guidance is unavailable.</div>';
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+
+</html>
